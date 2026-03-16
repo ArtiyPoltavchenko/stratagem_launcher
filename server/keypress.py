@@ -9,19 +9,31 @@ import threading
 import time
 
 try:
-    from pynput.keyboard import Controller, Key
+    from pynput.keyboard import Controller, Key, KeyCode
     _PYNPUT_AVAILABLE = True
 except Exception:
     Controller = None  # type: ignore[assignment,misc]
     Key = None         # type: ignore[assignment]
+    KeyCode = None     # type: ignore[assignment,misc]
     _PYNPUT_AVAILABLE = False
 
-_KEY_MAP: dict[str, str] = {
-    "up": "w",
-    "down": "s",
-    "left": "a",
-    "right": "d",
-}
+# Use Virtual Key codes (from_vk) instead of raw characters.
+# Raw char strings trigger KEYEVENTF_UNICODE which some games (DirectInput)
+# don't see reliably. VK codes send standard WM_KEYDOWN events that games
+# always receive — and avoid OS hotkey interception (Ctrl+W, Ctrl+S, etc.).
+#
+# VK codes: W=0x57  A=0x41  S=0x53  D=0x44
+def _build_key_map() -> dict:
+    if KeyCode is None:
+        return {"up": "w", "down": "s", "left": "a", "right": "d"}
+    return {
+        "up":    KeyCode.from_vk(0x57),  # W
+        "down":  KeyCode.from_vk(0x53),  # S
+        "left":  KeyCode.from_vk(0x41),  # A
+        "right": KeyCode.from_vk(0x44),  # D
+    }
+
+_KEY_MAP = _build_key_map()
 
 _lock = threading.Lock()
 
@@ -68,9 +80,9 @@ def execute_stratagem(
         time.sleep(ctrl_delay)
 
         for direction in keys:
-            char = _KEY_MAP[direction]
-            keyboard.press(char)
-            keyboard.release(char)
+            key = _KEY_MAP[direction]
+            keyboard.press(key)
+            keyboard.release(key)
             time.sleep(key_delay)
 
         keyboard.release(Key.ctrl)
