@@ -33,6 +33,7 @@ function getServerBase() {
 
 let allStratagems = [];
 let categories = {};
+let iconRepo = '';
 let activeCategory = 'all';
 let searchQuery = '';
 
@@ -49,6 +50,7 @@ async function loadStratagems() {
   const data = await apiFetch('/api/stratagems');
   allStratagems = data.stratagems || [];
   categories = data.categories || {};
+  iconRepo = data.icon_repo || '';
 }
 
 async function executeStratagem(id) {
@@ -176,21 +178,29 @@ function makeCard(s) {
   return card;
 }
 
+function resolveIconUrl(s) {
+  if (!s.icon) return null;
+  // If icon_repo is set, build full GitHub raw URL
+  if (iconRepo) {
+    const encoded = s.icon.split('/').map(encodeURIComponent).join('/');
+    return `${iconRepo}/${encoded}`;
+  }
+  // Fallback: treat as local path served by Flask
+  return s.icon;
+}
+
 function makeFallbackIcon(s, color) {
-  // Try to load image; fall back to SVG placeholder with first letter
+  const svg = buildLetterSvg(s.name[0], color);
+  const url = resolveIconUrl(s);
+  if (!url) return svg;
+
   const img = new Image();
   img.width = 36;
   img.height = 36;
   img.alt = '';
   img.style.cssText = 'width:36px;height:36px;object-fit:contain';
-
-  const svg = buildLetterSvg(s.name[0], color);
-
-  img.onload = () => img.replaceWith(img); // keep as-is
   img.onerror = () => img.replaceWith(svg);
-  img.src = s.icon;
-
-  // If icon path is relative, it's served from the same origin
+  img.src = url;
   return img;
 }
 

@@ -72,3 +72,8 @@ def get_by_id(stratagem_id: str) -> Optional[dict]:
 def get_categories() -> dict:
     """Return categories dict from JSON."""
     return _data.get("categories", {})
+
+
+def get_icon_repo() -> str:
+    """Return icon_repo base URL from JSON, or empty string."""
+    return _data.get("icon_repo", "")

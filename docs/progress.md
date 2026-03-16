@@ -1,57 +1,66 @@
 # Progress Tracker — Stratagem Launcher
 
-> Last updated: (Claude Code updates this)
+> Last updated: 2026-03-16
 
-## Phase 1: Project Skeleton
-- [ ] Initialize project structure (directories, files)
-- [ ] Create .venv, requirements.txt, .gitignore
-- [ ] Validate stratagems.json loads correctly
-- [ ] Create docs/ templates
-- [ ] First git commit
+## Phase 1: Project Skeleton ✅
+- [x] Initialize project structure (directories, files)
+- [x] Create .venv, requirements.txt, requirements-dev.txt, .gitignore
+- [x] Validate stratagems.json loads correctly
+- [x] Create docs/ templates
+- [x] First git commit
 
-## Phase 2: Server Core
+## Phase 2: Server Core ✅
 - [x] config.py — settings dataclass with CLI overrides
 - [x] stratagems.py — load, validate, query stratagems
-- [x] keypress.py — pynput key simulation with Ctrl+sequence (importable from WSL via try/except)
+- [x] keypress.py — pynput key simulation with Ctrl+sequence (WSL-safe via try/except)
 - [x] app.py — Flask app with /api/execute, /api/stratagems, /api/health, /api/settings
-- [x] tests/ — pytest for all server modules (42/42 passed)
-- [ ] Manual test: POST request → keys appear in Notepad (requires Windows + .venv_win)
+- [x] tests/ — pytest for all server modules (42/42 passing)
+- [x] Manual test: POST request → keys appear in Notepad ✅
 
-## Phase 3: PWA Minimal
-- [x] index.html — full structure: header, tabs, search, grid, settings panel
-- [x] app.js — fetch stratagems, render grid, POST on tap, toast feedback, settings localStorage
+## Phase 3: PWA Minimal ✅
+- [x] index.html — full structure: header, tabs, search, grid, settings overlay
+- [x] app.js — fetch stratagems, render grid, POST on tap, vibration, toasts, settings localStorage
 - [x] style.css — dark Helldivers theme, 4-col mobile grid, CSS variables
 - [x] manifest.json + sw.js — PWA installable, cache-first shell
-- [x] Flask serves web/ as static files (already in app.py)
-- [ ] Manual test: phone browser → tap button → keys on laptop
+- [x] Flask serves web/ as static files
+- [x] Manual test: phone browser → tap button → keys on laptop ✅
 
 ## Phase 4: Full UI
-- [ ] All stratagems rendered from JSON
-- [ ] Category tabs with filtering
-- [ ] Search bar
-- [ ] Visual feedback on tap (flash, vibrate)
-- [ ] manifest.json + sw.js (PWA installable)
-- [ ] Connection status indicator
-- [ ] Settings panel (IP, delay, test connection)
+- [ ] SVG icons via icon_repo (nvigneux GitHub) — app.js already supports icon_repo
+- [ ] Cooldown timer on cards after tap
+- [ ] Unverified badge on unverified stratagems
+- [ ] App icons (web/icons/app-192.png, app-512.png)
 
 ## Phase 5: Polish & Docs
-- [ ] SVG icons for stratagems (placeholder arrows + category color)
-- [ ] App icons (192px, 512px)
-- [ ] README.md with setup instructions
-- [ ] scripts/setup_usb.bat
-- [ ] scripts/start.sh
-- [ ] QR code generation for WiFi URL
-- [ ] Final testing checklist
+- [ ] README.md with setup instructions for both environments
+- [ ] scripts/setup_usb.bat — adb reverse for USB mode ✅ (created)
+- [ ] QR code display on server startup (WiFi URL)
+- [ ] Final manual testing checklist
 
-## Phase 6: Extras (optional, after MVP)
+## Phase 6: Loadouts & Extras (optional)
+- [ ] Custom Loadouts: select 4 stratagems → save preset → show only those on main screen
+- [ ] Loadout persistence in localStorage
+- [ ] Quick switch between presets (swipe or tabs)
 - [ ] WebSocket for instant feedback
-- [ ] Favorites / custom loadouts
 - [ ] Sound effects on execution
 - [ ] ngrok setup documentation
-- [ ] Stratagem cooldown timers on UI
+
+## Phase 7: Manual Input Mode (D-pad)
+- [ ] Server endpoints: POST /api/manual/start, /api/manual/key, /api/manual/stop
+- [ ] Server state machine: idle → manual_active → idle (with timeout)
+- [ ] D-pad UI component (portrait layout: bottom half, large thumb buttons)
+- [ ] D-pad UI component (landscape layout: gamepad style, D-pad left, Execute right)
+- [ ] CSS media queries for orientation switching
+- [ ] Visual sequence display (show entered arrows at top)
+- [ ] Haptic feedback per tap
+- [ ] Auto-release Ctrl after 3s timeout (configurable)
+- [ ] Tests for manual mode endpoints
 
 ## Blockers & Issues
 (Claude Code logs issues here)
 
 | Date | Issue | Status | Resolution |
 |------|-------|--------|------------|
+| 2026-03-16 | scripts/*.bat overwritten (used `python server\app.py` instead of `python -m server.app`) | ✅ Fixed | Restored `python -m server.app` in both bat files |
+| 2026-03-16 | stratagems.json updated to v2.0.0 with icon_repo field | ✅ Fixed | app.js now reads icon_repo, stratagems.py exposes get_icon_repo() |
+| 2026-03-16 | test_get_all_count hardcoded 58, JSON now has 59 | ✅ Fixed | Changed to `len > 0` |

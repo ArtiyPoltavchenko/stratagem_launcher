@@ -54,6 +54,7 @@ def create_app(cfg: Config = _default_config) -> Flask:
         return jsonify({
             "stratagems": stratagems.get_all(),
             "categories": stratagems.get_categories(),
+            "icon_repo": stratagems.get_icon_repo(),
         })
 
     @app.route("/api/execute", methods=["POST"])
