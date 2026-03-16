@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (Phase 9 complete)
+> Last updated: 2026-03-17 (Phase 9 + post-release bug fixes complete)
 
 ---
 
@@ -10,7 +10,7 @@
 Mobile PWA remote control for Helldivers 2 stratagems.
 Phone → HTTP → Python/Flask server → pynput → keystrokes in game.
 
-**Stack:** Python 3.10+, Flask, pynput, Vanilla JS/HTML/CSS (no npm).
+**Stack:** Python 3.10+, Flask, pynput, Vanilla JS/HTML/CSS (no npm), tkinter (desktop GUI).
 **Environments:** WSL2 for development/tests, Windows for running the server (pynput requires native Windows).
 
 ---
@@ -22,9 +22,14 @@ Phone (Chrome PWA)
   ├─ HTTP POST /api/execute {id}          → server presses Ctrl + key sequence
   ├─ HTTP POST /api/manual/start          → server presses and holds Ctrl
   ├─ HTTP POST /api/manual/key {dir}      → server presses one directional key
-  └─ HTTP POST /api/manual/stop           → server releases Ctrl
+  ├─ HTTP POST /api/manual/stop           → server releases Ctrl
+  ├─ GET/PUT   /api/loadouts              → server-side loadout persistence
        └─ Flask server (Windows, .venv_win)
             └─ keypress.py → pynput → KeyCode.from_vk() → Helldivers 2
+
+Desktop GUI (optional)
+  └─ desktop/server_manager.py (tkinter)
+       └─ werkzeug.make_server() in daemon thread → same Flask app
 ```
 
 ---
@@ -45,13 +50,14 @@ stratagem_launcher/
 │
 ├── server/
 │   ├── __init__.py
-│   ├── app.py                       # Flask app factory + all routes
+│   ├── app.py                       # Flask app factory + all routes (incl. /api/loadouts)
 │   ├── keypress.py                  # pynput simulation (VK codes, execute + manual mode)
 │   ├── stratagems.py                # JSON loader + validator + query functions
 │   └── config.py                   # Config dataclass (delays, host, port)
 │
 ├── data/
-│   └── stratagems.json              # 59 stratagems, 6 categories, icon_repo URL
+│   ├── stratagems.json              # 59 stratagems, 6 categories, icon_repo URL
+│   └── loadouts.json                # Server-side loadout persistence (created on first save)
 │
 ├── web/                             # PWA frontend (served by Flask as static)
 │   ├── index.html                   # App shell: header, loadout bar, tabs, grid, D-pad overlay
@@ -66,7 +72,7 @@ stratagem_launcher/
 │
 ├── desktop/
 │   ├── __init__.py
-│   └── server_manager.py            # tkinter GUI: start/stop/restart server, QR code, log viewer
+│   └── server_manager.py            # tkinter GUI: start/stop/restart, QR code, log viewer
 │
 ├── scripts/
 │   ├── start_server.bat             # Windows: launch server on localhost
@@ -81,12 +87,12 @@ stratagem_launcher/
 │   ├── __init__.py
 │   ├── test_stratagems.py           # JSON load, validation, query (14 tests)
 │   ├── test_keypress.py             # pynput mocked: execute + manual mode (29 tests)
-│   └── test_api.py                  # Flask test client: all endpoints (24 tests)
+│   └── test_api.py                  # Flask test client: all endpoints (29 tests)
 │
 └── docs/
     ├── progress.md                  # Phase tracker (all phases complete)
     ├── changelog.md                 # What changed and when
-    ├── decisions.md                 # Architectural decisions (ADR-001–004)
+    ├── decisions.md                 # Architectural decisions (ADR-001–006)
     └── testing_checklist.md         # Manual testing checklist
 ```
 
@@ -130,30 +136,6 @@ stratagem_launcher/
 - Loadout view: 2-col large-card grid (in-game optimised)
 - Persistence in localStorage (`sl_loadouts`)
 
-### Phase 9 — Desktop EXE — Server Manager ✅
-- `desktop/server_manager.py` — tkinter GUI: status dot, connection info, QR code, log viewer, Start/Stop/Restart
-- `ServerThread` — wraps `werkzeug.serving.make_server()` in daemon thread; `shutdown()` for clean stop
-- `TkLogHandler` — thread-safe: `queue.Queue` + `root.after(100, poll)` → `ScrolledText`
-- Connection panel: auto LAN IP detection, WiFi/USB URLs with Copy buttons, port input
-- QR code: `qrcode.make()` → PIL → `ImageTk.PhotoImage`; fallback to URL text if PIL missing
-- Mode radio: WiFi (`0.0.0.0`) / Localhost only (`127.0.0.1`)
-- Key delay slider: live-updates shared `Config` object while server is running
-- `resource_path()` helper for PyInstaller `_MEIPASS` bundling; `sys.path` fixup for `server` package
-- `scripts/build_exe.bat` — PyInstaller `--onefile --windowed` bundles `data/`, `web/`, `server/`
-- `requirements-build.txt` — `pyinstaller>=6.0` (build-only, not runtime)
-- `requirements.txt` — `qrcode[pil]>=7.0` (PIL extras for `ImageTk`)
-- **67 tests unchanged, all passing**
-
-### Phase 8 — Ship Module Cooldown Modifier ✅
-- `web/app.js`: `getCooldownModifier()`, `isShowCooldowns()`, `getEffectiveCooldown()`
-- `makeCard()`: static `.card__cd-label` — shows `~~100s~~ 75s` when modifier > 0
-- `startCooldown()`: applies modifier; skips entirely when show_cooldowns = false (fire-and-forget)
-- `initSettings()`: cooldown reduction slider (0–50%, step 5) + synced number input; show cooldowns checkbox; live `renderGrid()` on change
-- `web/index.html`: two new settings rows (reduction + toggle)
-- `web/style.css`: `.card__cd-label`, `.settings-range-row`, `.range-num-input`, `.settings-check-label`
-- localStorage: `sl_cooldown_modifier` (default 0%), `sl_show_cooldowns` (default true)
-- **67 tests unchanged, all passing**
-
 ### Phase 7 — Manual D-pad Input ✅
 - `server/keypress.py`: `manual_start()`, `manual_key()`, `manual_stop()`, `is_manual_active()`
 - State machine: idle → active → idle; `threading.Timer` auto-releases Ctrl after 3s inactivity
@@ -165,26 +147,96 @@ stratagem_launcher/
 - Server-side timeout reflected in UI status row
 - **67 tests total, all passing**
 
+### Phase 8 — Ship Module Cooldown Modifier ✅
+- `web/app.js`: `getCooldownModifier()`, `isShowCooldowns()`, `getEffectiveCooldown()`
+- `makeCard()`: static `.card__cd-label` — shows `~~100s~~ 75s` when modifier > 0
+- `startCooldown()`: applies modifier; skips entirely when show_cooldowns = false (fire-and-forget)
+- `initSettings()`: cooldown reduction slider (0–50%, step 5) + synced number input; show cooldowns checkbox; live `renderGrid()` on change
+- `web/index.html`: two new settings rows (reduction + toggle)
+- `web/style.css`: `.card__cd-label`, `.settings-range-row`, `.range-num-input`, `.settings-check-label`
+- localStorage: `sl_cooldown_modifier` (default 0%), `sl_show_cooldowns` (default true)
+- **67 tests unchanged, all passing**
+
+### Phase 9 — Desktop EXE — Server Manager ✅
+- `desktop/server_manager.py` — tkinter GUI: status dot, connection info + Copy buttons, QR code, log viewer, Start/Stop/Restart, mode radio, key delay slider
+- `ServerThread` — wraps `werkzeug.serving.make_server()` in daemon thread; `shutdown()` for clean stop
+- `TkLogHandler` — thread-safe: `queue.Queue` + `root.after(100, poll)` → `ScrolledText`
+- Connection panel: auto LAN IP detection, WiFi/Local URLs, port input
+- QR code: `qrcode.make()` → PIL → `ImageTk.PhotoImage`; fallback to URL text if PIL unavailable
+- Mode radio: WiFi (`0.0.0.0`) / Localhost (`127.0.0.1`) / USB (ADB, `127.0.0.1` + hint)
+- Key delay slider: live-updates shared `Config` object while server is running
+- `resource_path()` helper for PyInstaller `_MEIPASS` bundling; `sys.path` fixup for `server` package
+- `scripts/build_exe.bat` — PyInstaller `--onefile --windowed --collect-all PIL --collect-all qrcode`
+- `requirements-build.txt` — `pyinstaller>=6.0` (build-only, not runtime)
+- `requirements.txt` — `qrcode[pil]>=7.0` (PIL extras for `ImageTk`)
+- `server/app.py`: `GET/PUT /api/loadouts` — server-side persistence (`data/loadouts.json` in dev, next to `.exe` when frozen)
+- `web/app.js`: `syncLoadoutsFromServer()` on boot; `saveLoadoutsToStorage()` also PUTs to server
+- ADR-006 added to `docs/decisions.md`: tkinter vs Electron/PyQt rationale
+- **72 tests total, all passing** (5 new `TestLoadouts` tests)
+
+### Phase 9 — Post-Release Bug Fixes ✅
+
+Four bugs found during real-world exe testing and fixed:
+
+#### Bug 1: Stop button hangs / app crashes
+- **Root cause**: `_stop()` called `server.shutdown()` + `join(timeout=4)` on the tkinter main thread. `werkzeug.BaseWSGIServer.shutdown()` blocks until the serve loop exits — this deadlocks the tkinter event loop.
+- **Fix**: `_stop(callback=None)` now runs `shutdown()` + `join()` in a separate daemon thread. UI updates to `STOPPED` immediately; `callback` fires on the main thread via `root.after(0, callback)` once the thread exits.
+- **Also fixed**: `_restart()` uses `_stop(callback=...)` + 300ms delay before `_start()` (allows OS to release the port); `_on_close()` uses `_stop(callback=root.destroy)` — no more hang on window close.
+
+#### Bug 2: Crash when switching mode and restarting
+- **Root cause**: Same blocking `_stop()` as above. Switching from USB → Localhost and pressing Restart triggered the deadlock.
+- **Fix**: Covered by the background-thread `_stop()` fix above.
+
+#### Bug 3: `http://localhost:5000` never connects
+- **Root cause**: On Windows 11, `localhost` resolves to `::1` (IPv6 loopback) by default. The Flask/werkzeug server bound to `127.0.0.1` (IPv4) does not accept IPv6 connections — browser gets `ERR_CONNECTION_REFUSED`.
+- **Fix**: URL labels in Local and USB modes now always display `http://127.0.0.1:<port>` (explicit IPv4). Copy button copies the same.
+
+#### Bug 4: QR code not appearing in the UI (showing in console instead)
+- **Root cause 1**: `except ImportError` in `_refresh_qr()` only caught the import failure. Any error during PIL image conversion (e.g., PyInstaller bundling issue, Tcl/Tk not ready) would propagate unhandled and crash silently.
+- **Root cause 2**: PyInstaller does not auto-collect modules imported inside `try/except` blocks — PIL/qrcode were being silently excluded from the bundle.
+- **Fix 1**: Changed `except ImportError` → `except Exception` — any failure shows the URL as text fallback instead of crashing.
+- **Fix 2**: Added `--collect-all PIL --collect-all qrcode --hidden-import PIL.ImageTk --hidden-import PIL.Image` to `scripts/build_exe.bat`.
+- QR image size increased to 190×190px; "Scan to connect →" hint label added above QR.
+
+#### Bug 5: Window too small, text unreadable
+- **Fix**: All fonts scaled ~1.5×: base 9→13pt, bold 10→14pt, mono 8→11pt, status dot 14→20pt. Default window size 960×700 → 1160×840; minimum 800×620 → 980×720; left panel 330 → 430px.
+
 ---
 
-## Known Issues / Bugs Fixed
+## Known Issues / Bugs Fixed (all phases)
 
 | Date | Issue | Fix |
 |------|-------|-----|
 | 2026-03-16 | `start_server*.bat` used `python server\app.py` (breaks relative imports) | Restored `python -m server.app` |
 | 2026-03-16 | `stratagems.json` v2.0.0 added `icon_repo` — old `app.js` ignored it | Added `resolveIconUrl()`, server exposes `get_icon_repo()` |
 | 2026-03-16 | pynput sent raw chars (`'w'`) → `KEYEVENTF_UNICODE`, unreliable in games | Switched to `KeyCode.from_vk(0x57)` etc. → `WM_KEYDOWN`, no OS hotkey interception |
+| 2026-03-17 | Loadouts lost when WiFi IP changes (localStorage is origin-scoped) | Added `GET/PUT /api/loadouts`; PWA syncs on boot and every save |
+| 2026-03-17 | Stop button / window close hangs and crashes GUI | `_stop()` runs shutdown in daemon thread; UI updates immediately |
+| 2026-03-17 | Restart after mode switch crashes (same threading deadlock) | Covered by background-thread stop fix |
+| 2026-03-17 | `localhost:5000` never connects (Windows 11 resolves to IPv6 `::1`) | URL labels and Copy now always use `127.0.0.1` explicitly |
+| 2026-03-17 | QR code not shown in exe (PIL inside try/except not bundled by PyInstaller) | `--collect-all PIL --collect-all qrcode` in build script; `except Exception` fallback |
+| 2026-03-17 | GUI text too small / window not resizable enough | Fonts 1.5× larger; window 1160×840, min 980×720 |
 
 ---
 
 ## Running the Project
 
-**Windows (server):**
+**Option A — Windows server (terminal):**
 ```powershell
 python -m venv .venv_win
 .venv_win\Scripts\activate
 pip install -r requirements.txt
-scripts\start_server_wifi.bat   # WiFi + QR code
+scripts\start_server_wifi.bat   # WiFi + ASCII QR code in terminal
+```
+
+**Option B — Desktop GUI:**
+```powershell
+# Dev run (from project root):
+python desktop\server_manager.py
+
+# Or build standalone .exe (once):
+scripts\build_exe.bat
+# Then double-click: dist\Stratagem Launcher.exe
 ```
 
 **WSL (tests/dev):**
@@ -192,7 +244,7 @@ scripts\start_server_wifi.bat   # WiFi + QR code
 python3 -m venv .venv
 source .venv/bin/activate.fish
 pip install -r requirements-dev.txt
-pytest tests/   # 67 tests, all green
+pytest tests/   # 72 tests, all green
 ```
 
 **Phone:** open `http://<PC-IP>:5000` in Chrome → Add to Home Screen.
@@ -213,3 +265,5 @@ pytest tests/   # 67 tests, all green
 | POST | `/api/manual/key` | `{direction}` → press one key while Ctrl held |
 | POST | `/api/manual/stop` | Release Ctrl, end manual mode |
 | GET | `/api/manual/status` | `{active: bool}` |
+| GET | `/api/loadouts` | Return saved loadouts array (from server-side JSON) |
+| PUT | `/api/loadouts` | Replace loadouts array (persisted to disk) |
