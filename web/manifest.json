@@ -1,0 +1,14 @@
+{
+  "name": "Stratagem Launcher",
+  "short_name": "Stratagems",
+  "description": "Mobile remote control for Helldivers 2 stratagems",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#f5c518",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icons/app-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/app-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

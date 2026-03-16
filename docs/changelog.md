@@ -7,6 +7,13 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-16 — Phase 3: PWA Minimal
+- Added `web/style.css` — dark theme, CSS variables, 4-col responsive grid, card flash animation, toast, settings panel
+- Replaced `web/index.html` placeholder with full PWA structure (header, tabs, search, grid, settings overlay)
+- Added `web/app.js` — fetch stratagems from API, render cards with fallback SVG icons, POST execute on tap, vibration, toasts, settings panel with localStorage persistence
+- Added `web/manifest.json` — PWA manifest
+- Added `web/sw.js` — Service Worker: cache-first for shell, network-first for API
+
 ### 2026-03-16 — Phase 2: Server Core
 - Added `requirements-dev.txt` (without pynput, for WSL)
 - Added `server/config.py` — Config dataclass (key_delay_ms, ctrl_hold_delay_ms, host, port, debug)

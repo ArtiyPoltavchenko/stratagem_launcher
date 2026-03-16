@@ -18,10 +18,11 @@
 - [ ] Manual test: POST request → keys appear in Notepad (requires Windows + .venv_win)
 
 ## Phase 3: PWA Minimal
-- [ ] index.html — basic page with 5 stratagem buttons
-- [ ] app.js — fetch /api/stratagems, render buttons, POST on tap
-- [ ] style.css — dark theme, mobile-optimized grid
-- [ ] Flask serves web/ as static files
+- [x] index.html — full structure: header, tabs, search, grid, settings panel
+- [x] app.js — fetch stratagems, render grid, POST on tap, toast feedback, settings localStorage
+- [x] style.css — dark Helldivers theme, 4-col mobile grid, CSS variables
+- [x] manifest.json + sw.js — PWA installable, cache-first shell
+- [x] Flask serves web/ as static files (already in app.py)
 - [ ] Manual test: phone browser → tap button → keys on laptop
 
 ## Phase 4: Full UI
