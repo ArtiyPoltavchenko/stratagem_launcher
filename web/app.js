@@ -148,6 +148,16 @@ function makeCard(s) {
   card.style.setProperty('--card-accent', catColor);
   card.role = 'listitem';
   card.setAttribute('aria-label', s.name);
+  card.dataset.id = s.id;
+
+  // Unverified badge
+  if (s.verified === false) {
+    const badge = document.createElement('span');
+    badge.className = 'card__badge';
+    badge.textContent = '?';
+    badge.title = 'Key sequence unverified in-game';
+    card.appendChild(badge);
+  }
 
   // Icon
   const iconWrap = document.createElement('div');
@@ -171,6 +181,13 @@ function makeCard(s) {
     keys.appendChild(span);
   }
   card.appendChild(keys);
+
+  // Cooldown overlay (hidden by default)
+  if (s.cooldown > 0) {
+    const cd = document.createElement('div');
+    cd.className = 'card__cooldown hidden';
+    card.appendChild(cd);
+  }
 
   // Tap handler
   card.addEventListener('click', () => onCardTap(card, s));
@@ -231,9 +248,51 @@ function buildLetterSvg(letter, color) {
   return svg;
 }
 
+// ------------------------------------------------------------------ cooldown
+
+const _cooldownTimers = new Map(); // id → intervalId
+
+function startCooldown(card, s) {
+  if (!s.cooldown || s.cooldown <= 0) return;
+
+  const overlay = card.querySelector('.card__cooldown');
+  if (!overlay) return;
+
+  // Cancel existing timer for this card (re-tap resets cooldown)
+  if (_cooldownTimers.has(s.id)) {
+    clearInterval(_cooldownTimers.get(s.id));
+  }
+
+  let remaining = s.cooldown;
+  overlay.textContent = remaining + 's';
+  overlay.classList.remove('hidden');
+  card.classList.add('card--on-cooldown');
+
+  const timer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(timer);
+      _cooldownTimers.delete(s.id);
+      overlay.classList.add('hidden');
+      card.classList.remove('card--on-cooldown');
+    } else {
+      overlay.textContent = remaining + 's';
+    }
+  }, 1000);
+
+  _cooldownTimers.set(s.id, timer);
+}
+
 // ------------------------------------------------------------------ tap
 
 async function onCardTap(card, s) {
+  // Ignore taps during cooldown
+  if (card.classList.contains('card--on-cooldown')) {
+    const remaining = card.querySelector('.card__cooldown')?.textContent;
+    showToast(`Cooldown: ${remaining}`, 'busy');
+    return;
+  }
+
   // Haptic feedback
   if (navigator.vibrate) navigator.vibrate(40);
 
@@ -244,14 +303,12 @@ async function onCardTap(card, s) {
 
   try {
     await executeStratagem(s.id);
+    startCooldown(card, s);
   } catch (err) {
     if (err.status === 503) {
-      const data = await err.response?.json?.() || {};
-      if (data.status === 'busy') {
-        showToast('Busy — wait for current stratagem', 'busy');
-      } else {
-        showToast('Key sim unavailable (run on Windows)', 'error');
-      }
+      showToast('Busy — wait for current stratagem', 'busy');
+    } else if (err.status !== undefined) {
+      showToast('Key sim unavailable (run on Windows)', 'error');
     } else {
       showToast('Server error — check connection', 'error');
       setStatus('error', 'Offline');

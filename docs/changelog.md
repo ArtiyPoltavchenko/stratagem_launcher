@@ -7,6 +7,14 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-16 — Phase 4: Full UI
+- `app.js`: added cooldown overlay per card (local countdown after tap, re-tap resets)
+- `app.js`: added unverified badge (`?` in corner) for stratagems with `verified: false`
+- `app.js`: added `startCooldown()`, `_cooldownTimers` map; tap blocked during cooldown
+- `style.css`: added `.card__badge`, `.card__cooldown`, `.card--on-cooldown` styles
+- `scripts/generate_icons.py`: pure-stdlib PNG generator (no Pillow needed)
+- Generated `web/icons/app-192.png` and `web/icons/app-512.png`
+
 ### 2026-03-16 — Phase 3: PWA Minimal
 - Added `web/style.css` — dark theme, CSS variables, 4-col responsive grid, card flash animation, toast, settings panel
 - Replaced `web/index.html` placeholder with full PWA structure (header, tabs, search, grid, settings overlay)

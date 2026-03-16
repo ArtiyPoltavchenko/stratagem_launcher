@@ -25,11 +25,11 @@
 - [x] Flask serves web/ as static files
 - [x] Manual test: phone browser → tap button → keys on laptop ✅
 
-## Phase 4: Full UI
-- [ ] SVG icons via icon_repo (nvigneux GitHub) — app.js already supports icon_repo
-- [ ] Cooldown timer on cards after tap
-- [ ] Unverified badge on unverified stratagems
-- [ ] App icons (web/icons/app-192.png, app-512.png)
+## Phase 4: Full UI ✅
+- [x] SVG icons via icon_repo (nvigneux GitHub) — resolveIconUrl() builds full URL
+- [x] Cooldown timer on cards after tap (local countdown, resets on re-tap)
+- [x] Unverified badge — yellow "?" in card corner for verified: false
+- [x] App icons generated — web/icons/app-192.png, app-512.png (stdlib PNG generator)
 
 ## Phase 5: Polish & Docs
 - [ ] README.md with setup instructions for both environments
