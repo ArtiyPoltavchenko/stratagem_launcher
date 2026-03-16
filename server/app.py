@@ -136,8 +136,47 @@ def _parse_args() -> Config:
     )
 
 
+def _print_wifi_info(port: int) -> None:
+    """Print local IP addresses and QR code when running in WiFi mode."""
+    import socket
+    ips: list[str] = []
+    try:
+        # Get all non-loopback IPv4 addresses
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if not ip.startswith("127."):
+                ips.append(ip)
+    except Exception:
+        pass
+
+    if not ips:
+        log.info("Could not detect local IP. Check your network settings.")
+        return
+
+    url = f"http://{ips[0]}:{port}"
+    print("\n" + "=" * 48)
+    print(f"  Open on your phone: {url}")
+    print("=" * 48)
+
+    # Print QR code if qrcode package is available
+    try:
+        import qrcode  # type: ignore[import]
+        qr = qrcode.QRCode(border=1)
+        qr.add_data(url)
+        qr.make(fit=True)
+        qr.print_ascii(invert=True)
+    except ImportError:
+        print("  (install qrcode for QR code display: pip install qrcode)")
+
+    if len(ips) > 1:
+        print("  Other IPs:", ", ".join(f"http://{ip}:{port}" for ip in ips[1:]))
+    print()
+
+
 if __name__ == "__main__":
     cfg = _parse_args()
     app = create_app(cfg)
     log.info("Starting server on http://%s:%d", cfg.host, cfg.port)
+    if cfg.host == "0.0.0.0":
+        _print_wifi_info(cfg.port)
     app.run(host=cfg.host, port=cfg.port, debug=cfg.debug)

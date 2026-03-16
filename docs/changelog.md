@@ -7,6 +7,12 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-16 — Phase 5: Polish & Docs
+- `README.md`: full rewrite — Windows+WSL setup, WiFi/USB connection, troubleshooting
+- `server/app.py`: added `_print_wifi_info()` — prints IPs + QR code when `--host 0.0.0.0`
+- `requirements.txt`: added `qrcode>=7.0`
+- `docs/testing_checklist.md`: full manual testing checklist
+
 ### 2026-03-16 — Phase 4: Full UI
 - `app.js`: added cooldown overlay per card (local countdown after tap, re-tap resets)
 - `app.js`: added unverified badge (`?` in corner) for stratagems with `verified: false`

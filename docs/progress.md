@@ -31,11 +31,11 @@
 - [x] Unverified badge — yellow "?" in card corner for verified: false
 - [x] App icons generated — web/icons/app-192.png, app-512.png (stdlib PNG generator)
 
-## Phase 5: Polish & Docs
-- [ ] README.md with setup instructions for both environments
-- [ ] scripts/setup_usb.bat — adb reverse for USB mode ✅ (created)
-- [ ] QR code display on server startup (WiFi URL)
-- [ ] Final manual testing checklist
+## Phase 5: Polish & Docs ✅
+- [x] README.md — full rewrite: Windows setup, WiFi/USB connection, troubleshooting, WSL dev
+- [x] scripts/setup_usb.bat — adb reverse for USB mode
+- [x] QR code on server startup (WiFi mode) — uses qrcode lib, graceful fallback if missing
+- [x] docs/testing_checklist.md — full manual test checklist
 
 ## Phase 6: Loadouts & Extras (optional)
 - [ ] Custom Loadouts: select 4 stratagems → save preset → show only those on main screen
