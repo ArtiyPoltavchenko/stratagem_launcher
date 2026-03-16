@@ -1,21 +1,21 @@
 # Progress Tracker — Stratagem Launcher
 
-> Last updated: 2026-03-16
+> Last updated: (Claude Code updates this)
 
 ## Phase 1: Project Skeleton
-- [x] Initialize project structure (directories, files)
-- [x] Create .venv, requirements.txt, .gitignore
-- [x] Validate stratagems.json loads correctly (58 stratagems, 6 categories — OK)
-- [x] Create docs/ templates
-- [x] First git commit
+- [ ] Initialize project structure (directories, files)
+- [ ] Create .venv, requirements.txt, .gitignore
+- [ ] Validate stratagems.json loads correctly
+- [ ] Create docs/ templates
+- [ ] First git commit
 
 ## Phase 2: Server Core
-- [ ] config.py — settings dataclass with CLI overrides
-- [ ] stratagems.py — load, validate, query stratagems
-- [ ] keypress.py — pynput key simulation with Ctrl+sequence
-- [ ] app.py — Flask app with /api/execute, /api/stratagems, /api/health
-- [ ] tests/ — pytest for all server modules
-- [ ] Manual test: POST request → keys appear in Notepad
+- [x] config.py — settings dataclass with CLI overrides
+- [x] stratagems.py — load, validate, query stratagems
+- [x] keypress.py — pynput key simulation with Ctrl+sequence (importable from WSL via try/except)
+- [x] app.py — Flask app with /api/execute, /api/stratagems, /api/health, /api/settings
+- [x] tests/ — pytest for all server modules (42/42 passed)
+- [ ] Manual test: POST request → keys appear in Notepad (requires Windows + .venv_win)
 
 ## Phase 3: PWA Minimal
 - [ ] index.html — basic page with 5 stratagem buttons
