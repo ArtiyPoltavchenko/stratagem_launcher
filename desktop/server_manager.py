@@ -46,9 +46,9 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------- constants
 
 WINDOW_TITLE = "Stratagem Launcher — Server Manager"
-WINDOW_MIN_W = 800
-WINDOW_MIN_H = 620
-WINDOW_INIT   = "960x700"
+WINDOW_MIN_W = 980
+WINDOW_MIN_H = 720
+WINDOW_INIT  = "1160x840"
 
 COLOR_RUN   = "#4caf50"
 COLOR_STOP  = "#f44336"
@@ -59,6 +59,15 @@ COLOR_FG    = "#e0e0e0"
 COLOR_DIM   = "#888"
 COLOR_YEL   = "#f5c518"
 COLOR_BTN   = "#2a2a2a"
+
+# Font definitions — ~1.5× larger than original
+F_BASE  = ("Segoe UI", 13)
+F_BOLD  = ("Segoe UI", 13, "bold")
+F_SM    = ("Segoe UI", 11)
+F_LG    = ("Segoe UI", 14, "bold")
+F_PANEL = ("Segoe UI", 11, "bold")   # LabelFrame titles
+F_MONO  = ("Consolas", 11)
+F_DOT   = ("Segoe UI", 20)
 
 
 # ---------------------------------------------------------------- IP helper
@@ -142,7 +151,7 @@ class ServerManagerApp:
         self._log_queue: queue.Queue = queue.Queue()
         self._qr_image = None  # holds ImageTk ref to prevent GC
 
-        # Shared mutable config — slider updates it live while server is running
+        # Shared mutable config — slider updates it live while server runs
         self._cfg = Config()
 
         self._mode_var = tk.StringVar(value="wifi")   # "wifi" | "local" | "usb"
@@ -161,29 +170,28 @@ class ServerManagerApp:
 
     def _build_ui(self) -> None:
         # ── Status bar ────────────────────────────────────────────────────
-        status_bar = tk.Frame(self.root, bg=COLOR_PANEL, pady=8)
+        status_bar = tk.Frame(self.root, bg=COLOR_PANEL, pady=10)
         status_bar.pack(fill="x", side="top")
 
         tk.Label(
             status_bar, text="Server Status:", bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=("Segoe UI", 10),
-        ).pack(side="left", padx=(14, 6))
+            font=F_BASE,
+        ).pack(side="left", padx=(16, 8))
         self._status_dot = tk.Label(
-            status_bar, text="●", bg=COLOR_PANEL, font=("Segoe UI", 14),
+            status_bar, text="●", bg=COLOR_PANEL, font=F_DOT,
         )
         self._status_dot.pack(side="left")
         self._status_lbl = tk.Label(
-            status_bar, text="STOPPED", bg=COLOR_PANEL,
-            font=("Segoe UI", 10, "bold"),
+            status_bar, text="STOPPED", bg=COLOR_PANEL, font=F_LG,
         )
-        self._status_lbl.pack(side="left", padx=(4, 0))
+        self._status_lbl.pack(side="left", padx=(6, 0))
 
-        # ── Main content: left controls + right log ────────────────────────
+        # ── Main content: left panel + right log ───────────────────────────
         content = tk.Frame(self.root, bg=COLOR_BG)
-        content.pack(fill="both", expand=True, padx=10, pady=8)
+        content.pack(fill="both", expand=True, padx=12, pady=10)
 
-        left = tk.Frame(content, bg=COLOR_BG, width=330)
-        left.pack(side="left", fill="y", padx=(0, 8))
+        left = tk.Frame(content, bg=COLOR_BG, width=430)
+        left.pack(side="left", fill="y", padx=(0, 10))
         left.pack_propagate(False)
 
         right = tk.Frame(content, bg=COLOR_BG)
@@ -191,40 +199,44 @@ class ServerManagerApp:
 
         # ── Connection panel ───────────────────────────────────────────────
         conn = self._make_panel(left, " Connection ")
-        conn.pack(fill="x", pady=(0, 8))
+        conn.pack(fill="x", pady=(0, 10))
 
         self._wifi_url_var = tk.StringVar(value="—")
-        self._usb_url_var  = tk.StringVar(value="http://localhost:5000")
+        self._local_url_var = tk.StringVar(value="http://127.0.0.1:5000")
 
         self._url_row(conn, "WiFi:", self._wifi_url_var, self._copy_wifi)
-        self._url_row(conn, "USB:",  self._usb_url_var,  self._copy_usb)
+        self._url_row(conn, "Local:", self._local_url_var, self._copy_local)
 
         port_row = tk.Frame(conn, bg=COLOR_PANEL)
-        port_row.pack(fill="x", padx=10, pady=(2, 6))
+        port_row.pack(fill="x", padx=12, pady=(4, 8))
         tk.Label(
             port_row, text="Port:", bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=("Segoe UI", 9), width=5, anchor="w",
+            font=F_BASE, width=6, anchor="w",
         ).pack(side="left")
         tk.Entry(
             port_row, textvariable=self._port_var, width=7,
             bg=COLOR_BG, fg=COLOR_FG, insertbackground=COLOR_FG,
-            relief="flat", font=("Segoe UI", 9),
+            relief="flat", font=F_BASE,
         ).pack(side="left")
         self._port_var.trace_add("write", lambda *_: self.root.after(200, self._refresh_qr))
 
+        # QR code area
+        self._qr_hint = tk.Label(
+            conn, text="", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        )
+        self._qr_hint.pack()
         self._qr_label = tk.Label(conn, bg=COLOR_PANEL, cursor="arrow")
-        self._qr_label.pack(pady=(4, 10))
+        self._qr_label.pack(pady=(0, 12))
 
         # ── Settings panel ─────────────────────────────────────────────────
         sett = self._make_panel(left, " Settings ")
-        sett.pack(fill="x", pady=(0, 8))
+        sett.pack(fill="x", pady=(0, 10))
 
         mode_row = tk.Frame(sett, bg=COLOR_PANEL)
-        mode_row.pack(fill="x", padx=10, pady=(8, 2))
+        mode_row.pack(fill="x", padx=12, pady=(10, 4))
         tk.Label(
-            mode_row, text="Mode:", bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=("Segoe UI", 9),
-        ).pack(side="left", padx=(0, 8))
+            mode_row, text="Mode:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_BASE,
+        ).pack(side="left", padx=(0, 10))
         for label, value in [
             ("WiFi (0.0.0.0)", "wifi"),
             ("Localhost", "local"),
@@ -233,25 +245,25 @@ class ServerManagerApp:
             tk.Radiobutton(
                 mode_row, text=label, variable=self._mode_var, value=value,
                 bg=COLOR_PANEL, fg=COLOR_FG, selectcolor=COLOR_BG,
-                activebackground=COLOR_PANEL, font=("Segoe UI", 9),
+                activebackground=COLOR_PANEL, font=F_BASE,
                 command=self._on_mode_change,
-            ).pack(side="left", padx=(0, 8))
+            ).pack(side="left", padx=(0, 10))
 
         self._usb_hint = tk.Label(
-            sett, text="→ Run  scripts\\setup_usb.bat  then connect USB cable",
-            bg=COLOR_PANEL, fg=COLOR_YEL, font=("Segoe UI", 8),
+            sett,
+            text="→ Run  scripts\\setup_usb.bat  then connect USB cable",
+            bg=COLOR_PANEL, fg=COLOR_YEL, font=F_SM,
         )
         # shown only in USB mode; hidden initially
 
         delay_row = tk.Frame(sett, bg=COLOR_PANEL)
-        delay_row.pack(fill="x", padx=10, pady=(0, 10))
+        delay_row.pack(fill="x", padx=12, pady=(0, 12))
         tk.Label(
-            delay_row, text="Key delay:", bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=("Segoe UI", 9),
-        ).pack(side="left", padx=(0, 6))
+            delay_row, text="Key delay:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_BASE,
+        ).pack(side="left", padx=(0, 8))
         self._delay_lbl = tk.Label(
             delay_row, text="50 ms", bg=COLOR_PANEL, fg=COLOR_YEL,
-            font=("Segoe UI", 9, "bold"), width=6, anchor="e",
+            font=F_BOLD, width=7, anchor="e",
         )
         self._delay_lbl.pack(side="right")
         tk.Scale(
@@ -263,21 +275,15 @@ class ServerManagerApp:
 
         # ── Control buttons ────────────────────────────────────────────────
         ctrl = tk.Frame(left, bg=COLOR_BG)
-        ctrl.pack(fill="x", pady=(0, 4))
+        ctrl.pack(fill="x", pady=(0, 6))
 
-        self._start_btn = self._make_btn(
-            ctrl, "▶  Start", self._start, bg="#2b4a2b",
-        )
-        self._start_btn.pack(side="left", padx=(0, 6))
+        self._start_btn = self._make_btn(ctrl, "▶  Start",   self._start,   bg="#2b4a2b")
+        self._start_btn.pack(side="left", padx=(0, 8))
 
-        self._stop_btn = self._make_btn(
-            ctrl, "■  Stop", self._stop, bg="#4a2b2b",
-        )
-        self._stop_btn.pack(side="left", padx=(0, 6))
+        self._stop_btn = self._make_btn(ctrl, "■  Stop",    self._stop,    bg="#4a2b2b")
+        self._stop_btn.pack(side="left", padx=(0, 8))
 
-        self._restart_btn = self._make_btn(
-            ctrl, "↻  Restart", self._restart, bg=COLOR_CARD,
-        )
+        self._restart_btn = self._make_btn(ctrl, "↻  Restart", self._restart, bg=COLOR_CARD)
         self._restart_btn.pack(side="left")
 
         # ── Log viewer ─────────────────────────────────────────────────────
@@ -286,48 +292,45 @@ class ServerManagerApp:
 
         self._log_text = scrolledtext.ScrolledText(
             log_frame, state="disabled",
-            bg="#0e0e0e", fg="#aaaaaa",
-            font=("Consolas", 8), relief="flat",
+            bg="#0e0e0e", fg="#bbbbbb",
+            font=F_MONO, relief="flat",
             wrap="word", insertbackground=COLOR_FG,
         )
-        self._log_text.pack(fill="both", expand=True, padx=4, pady=(4, 0))
+        self._log_text.pack(fill="both", expand=True, padx=6, pady=(6, 0))
 
         clear_row = tk.Frame(log_frame, bg=COLOR_PANEL)
-        clear_row.pack(fill="x", padx=4, pady=4)
-        self._make_btn(
-            clear_row, "Clear", self._clear_log, bg=COLOR_CARD,
-        ).pack(side="right")
+        clear_row.pack(fill="x", padx=6, pady=6)
+        self._make_btn(clear_row, "Clear", self._clear_log, bg=COLOR_CARD).pack(side="right")
 
     # ── widget factory helpers ──────────────────────────────────────────────
 
     def _make_panel(self, parent, title: str) -> tk.LabelFrame:
         return tk.LabelFrame(
             parent, text=title, bg=COLOR_PANEL, fg=COLOR_YEL,
-            font=("Segoe UI", 9, "bold"), labelanchor="nw",
-            bd=1, relief="solid",
+            font=F_PANEL, labelanchor="nw", bd=1, relief="solid",
         )
 
     def _make_btn(self, parent, text: str, cmd, bg: str = COLOR_BTN) -> tk.Button:
         return tk.Button(
             parent, text=text, command=cmd, bg=bg, fg=COLOR_FG,
-            relief="flat", font=("Segoe UI", 9, "bold"),
-            padx=10, pady=6, cursor="hand2",
+            relief="flat", font=F_BOLD,
+            padx=14, pady=8, cursor="hand2",
             activebackground=COLOR_CARD, activeforeground=COLOR_FG,
         )
 
     def _url_row(self, parent, label: str, var: tk.StringVar, copy_cmd) -> None:
         row = tk.Frame(parent, bg=COLOR_PANEL)
-        row.pack(fill="x", padx=10, pady=(8, 2))
+        row.pack(fill="x", padx=12, pady=(10, 2))
         tk.Label(
             row, text=label, bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=("Segoe UI", 9), width=5, anchor="w",
+            font=F_BASE, width=6, anchor="w",
         ).pack(side="left")
         tk.Label(
             row, textvariable=var, bg=COLOR_PANEL, fg=COLOR_YEL,
-            font=("Segoe UI", 9), anchor="w",
+            font=F_BOLD, anchor="w",
         ).pack(side="left", fill="x", expand=True)
         self._make_btn(row, "Copy", copy_cmd, bg=COLOR_CARD).pack(
-            side="right", ipadx=0, ipady=0, padx=(4, 0),
+            side="right", padx=(6, 0),
         )
 
     # ── URL / QR helpers ───────────────────────────────────────────────────
@@ -335,25 +338,25 @@ class ServerManagerApp:
     def _get_host(self) -> str:
         return "0.0.0.0" if self._mode_var.get() == "wifi" else "127.0.0.1"
 
-    def _on_mode_change(self) -> None:
-        mode = self._mode_var.get()
-        if mode == "usb":
-            self._usb_hint.pack(fill="x", padx=10, pady=(0, 8))
-        else:
-            self._usb_hint.pack_forget()
-        self._refresh_qr()
-
     def _get_port(self) -> int:
         try:
             return int(self._port_var.get())
         except ValueError:
             return 5000
 
+    def _on_mode_change(self) -> None:
+        if self._mode_var.get() == "usb":
+            self._usb_hint.pack(fill="x", padx=12, pady=(0, 10))
+        else:
+            self._usb_hint.pack_forget()
+        self._refresh_qr()
+
     def _refresh_qr(self) -> None:
         port = self._get_port()
         mode = self._mode_var.get()
-        lan = get_lan_ip()
+        lan  = get_lan_ip()
 
+        # WiFi URL
         if mode == "wifi" and lan:
             wifi_url = f"http://{lan}:{port}"
             self._wifi_url_var.set(wifi_url)
@@ -361,42 +364,50 @@ class ServerManagerApp:
             wifi_url = ""
             self._wifi_url_var.set("—")
 
-        self._usb_url_var.set(f"http://localhost:{port}")
+        # Local URL — use 127.0.0.1 explicitly (Windows 11: localhost → ::1 IPv6)
+        self._local_url_var.set(f"http://127.0.0.1:{port}")
 
-        # QR code: only useful in WiFi mode
-        if mode == "usb":
+        # QR code — only meaningful in WiFi mode
+        if mode in ("local", "usb"):
+            self._qr_hint.configure(text="")
             self._qr_label.configure(
-                image="", text="Connect USB cable + run setup_usb.bat",
-                fg=COLOR_DIM, font=("Segoe UI", 8),
+                image="",
+                text="Open  http://127.0.0.1:{} in browser".format(port),
+                fg=COLOR_DIM, font=F_SM,
             )
             self._qr_image = None
             return
 
         if not wifi_url:
+            self._qr_hint.configure(text="")
             self._qr_label.configure(
-                image="", text="(Switch to WiFi mode to show QR)",
-                fg=COLOR_DIM, font=("Segoe UI", 8),
+                image="", text="(No LAN IP detected — check network)",
+                fg=COLOR_DIM, font=F_SM,
             )
             self._qr_image = None
             return
 
+        # Try to render QR code image
         try:
-            import qrcode
-            from PIL import Image, ImageTk
+            import qrcode                    # type: ignore[import]
+            from PIL import Image, ImageTk   # type: ignore[import]
             img = qrcode.make(wifi_url)
-            img = img.resize((160, 160), Image.LANCZOS)
+            img = img.resize((190, 190), Image.LANCZOS)
             self._qr_image = ImageTk.PhotoImage(img)
+            self._qr_hint.configure(text="Scan to connect from phone →", fg=COLOR_DIM)
             self._qr_label.configure(image=self._qr_image, text="")
-        except ImportError:
+        except Exception:
+            # PIL not available or QR generation failed — show URL as text
+            self._qr_hint.configure(text="Open on phone:", fg=COLOR_DIM)
             self._qr_label.configure(
-                image="", text=wifi_url, fg=COLOR_YEL, font=("Consolas", 7),
+                image="", text=wifi_url, fg=COLOR_YEL, font=F_BOLD,
             )
             self._qr_image = None
 
     def _on_delay_change(self, val: str) -> None:
         ms = int(val)
         self._delay_lbl.configure(text=f"{ms} ms")
-        self._cfg.key_delay_ms = ms  # live update of shared config
+        self._cfg.key_delay_ms = ms  # live-update shared config
 
     def _copy_wifi(self) -> None:
         url = self._wifi_url_var.get()
@@ -404,9 +415,9 @@ class ServerManagerApp:
             self.root.clipboard_clear()
             self.root.clipboard_append(url)
 
-    def _copy_usb(self) -> None:
+    def _copy_local(self) -> None:
         self.root.clipboard_clear()
-        self.root.clipboard_append(self._usb_url_var.get())
+        self.root.clipboard_append(self._local_url_var.get())
 
     # ── server control ─────────────────────────────────────────────────────
 
@@ -432,20 +443,28 @@ class ServerManagerApp:
         self._server_thread.start()
         self._set_running(True)
 
-    def _stop(self) -> None:
-        if self._server_thread:
-            self._server_thread.shutdown()
-            self._server_thread.join(timeout=4)
-            self._server_thread = None
-        self._set_running(False)
+    def _stop(self, callback=None) -> None:
+        """Shut down the server in a background thread to avoid blocking tkinter."""
+        thread = self._server_thread
+        self._server_thread = None
+        self._set_running(False)   # update UI immediately
+
+        def _do() -> None:
+            if thread is not None:
+                thread.shutdown()
+                thread.join(timeout=5)
+            if callback is not None:
+                self.root.after(0, callback)
+
+        threading.Thread(target=_do, daemon=True, name="stop-server").start()
 
     def _restart(self) -> None:
-        self._stop()
-        self._start()
+        def _after_stop() -> None:
+            self.root.after(300, self._start)   # brief pause for OS to release port
+        self._stop(callback=_after_stop)
 
     def _on_close(self) -> None:
-        self._stop()
-        self.root.destroy()
+        self._stop(callback=self.root.destroy)
 
     # ── log ────────────────────────────────────────────────────────────────
 
@@ -455,7 +474,6 @@ class ServerManagerApp:
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
         root_logger.addHandler(handler)
-        # Suppress verbose werkzeug access log noise; keep errors
         logging.getLogger("werkzeug").setLevel(logging.INFO)
 
     def _poll_log(self) -> None:
