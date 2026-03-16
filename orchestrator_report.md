@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-16 (Phase 8 complete)
+> Last updated: 2026-03-17 (Phase 9 complete)
 
 ---
 
@@ -39,8 +39,9 @@ stratagem_launcher/
 ├── README.md                        # User-facing setup + usage guide
 ├── INITIAL_PROMPT.md                # Bootstrap prompt for new Claude sessions
 ├── .gitignore
-├── requirements.txt                 # Windows venv: flask, flask-cors, pynput, pytest, qrcode
+├── requirements.txt                 # Windows venv: flask, flask-cors, pynput, pytest, qrcode[pil]
 ├── requirements-dev.txt             # WSL venv: flask, flask-cors, pytest (no pynput)
+├── requirements-build.txt           # Build only: pyinstaller>=6.0
 │
 ├── server/
 │   ├── __init__.py
@@ -63,10 +64,15 @@ stratagem_launcher/
 │       ├── app-512.png
 │       └── stratagems/              # (empty — icons loaded from GitHub CDN at runtime)
 │
+├── desktop/
+│   ├── __init__.py
+│   └── server_manager.py            # tkinter GUI: start/stop/restart server, QR code, log viewer
+│
 ├── scripts/
 │   ├── start_server.bat             # Windows: launch server on localhost
 │   ├── start_server_wifi.bat        # Windows: launch server on 0.0.0.0 + print QR code
 │   ├── setup_usb.bat                # Windows: adb reverse tcp:5000 tcp:5000
+│   ├── build_exe.bat                # PyInstaller: build Stratagem Launcher.exe
 │   ├── setup_wsl_venv.sh            # WSL: create .venv without pynput
 │   ├── validate_json.py             # Validate stratagems.json integrity
 │   └── generate_icons.py           # Generate app-192.png / app-512.png (stdlib only)
@@ -123,6 +129,20 @@ stratagem_launcher/
 - Edit mode: card selection overlay, `X/4` counter, Save/Cancel
 - Loadout view: 2-col large-card grid (in-game optimised)
 - Persistence in localStorage (`sl_loadouts`)
+
+### Phase 9 — Desktop EXE — Server Manager ✅
+- `desktop/server_manager.py` — tkinter GUI: status dot, connection info, QR code, log viewer, Start/Stop/Restart
+- `ServerThread` — wraps `werkzeug.serving.make_server()` in daemon thread; `shutdown()` for clean stop
+- `TkLogHandler` — thread-safe: `queue.Queue` + `root.after(100, poll)` → `ScrolledText`
+- Connection panel: auto LAN IP detection, WiFi/USB URLs with Copy buttons, port input
+- QR code: `qrcode.make()` → PIL → `ImageTk.PhotoImage`; fallback to URL text if PIL missing
+- Mode radio: WiFi (`0.0.0.0`) / Localhost only (`127.0.0.1`)
+- Key delay slider: live-updates shared `Config` object while server is running
+- `resource_path()` helper for PyInstaller `_MEIPASS` bundling; `sys.path` fixup for `server` package
+- `scripts/build_exe.bat` — PyInstaller `--onefile --windowed` bundles `data/`, `web/`, `server/`
+- `requirements-build.txt` — `pyinstaller>=6.0` (build-only, not runtime)
+- `requirements.txt` — `qrcode[pil]>=7.0` (PIL extras for `ImageTk`)
+- **67 tests unchanged, all passing**
 
 ### Phase 8 — Ship Module Cooldown Modifier ✅
 - `web/app.js`: `getCooldownModifier()`, `isShowCooldowns()`, `getEffectiveCooldown()`

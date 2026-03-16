@@ -7,6 +7,16 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Phase 9: Desktop EXE — Server Manager
+- `desktop/__init__.py`, `desktop/server_manager.py`: tkinter GUI wrapping Flask server
+- `ServerThread`: werkzeug make_server() in daemon thread; shutdown() for clean stop
+- `TkLogHandler`: thread-safe log forwarding via queue.Queue + root.after(100) poll
+- GUI: status dot, connection frame (WiFi/USB URLs + Copy, port input, QR code), mode radio, key delay slider (live Config update), Start/Stop/Restart, ScrolledText log + Clear
+- `resource_path()`: PyInstaller _MEIPASS-aware path resolution; sys.path fixup for 'server' package
+- `scripts/build_exe.bat`: PyInstaller --onefile --windowed, bundles data/ web/ server/
+- `requirements-build.txt`: pyinstaller>=6.0 (build-only)
+- `requirements.txt`: qrcode>=7.0 → qrcode[pil]>=7.0 (PIL needed for ImageTk QR display)
+
 ### 2026-03-16 — Phase 8: Ship Module Cooldown Modifier
 - `web/app.js`: getCooldownModifier(), isShowCooldowns(), getEffectiveCooldown(); updated makeCard() with .card__cd-label (strikethrough old + new value when modifier > 0); startCooldown() applies modifier and skips if show_cooldowns off; initSettings() wires up new controls with live renderGrid()
 - `web/index.html`: cooldown reduction row (range slider 0–50% + number input), show cooldowns checkbox in Settings panel

@@ -85,6 +85,19 @@
 - [x] Live grid re-render on modifier/checkbox change; persisted to localStorage
 - [x] 67 existing tests unchanged
 
+## Phase 9: Desktop EXE — Server Manager ✅
+- [x] desktop/server_manager.py — tkinter GUI (status, connection, QR, log, settings, controls)
+- [x] ServerThread — werkzeug make_server() in daemon thread, clean shutdown()
+- [x] TkLogHandler — thread-safe logging via queue.Queue + root.after() poll → ScrolledText
+- [x] Connection panel — auto LAN IP, WiFi/USB URLs, Copy buttons, port input
+- [x] QR code — qrcode → PIL → ImageTk (graceful fallback to URL text if PIL missing)
+- [x] Settings — WiFi/Localhost radio, key delay slider (live-updates shared Config)
+- [x] resource_path() helper for PyInstaller _MEIPASS bundling
+- [x] scripts/build_exe.bat — PyInstaller --onefile --windowed
+- [x] requirements-build.txt (pyinstaller); requirements.txt: qrcode[pil]
+- [x] 67 existing tests unchanged
+- [ ] Manual test: build .exe, run standalone, connect from phone (Windows only)
+
 ## Blockers & Issues
 
 | Date | Issue | Status | Resolution |
