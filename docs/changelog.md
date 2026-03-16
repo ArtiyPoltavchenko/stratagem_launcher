@@ -7,6 +7,13 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-16 — Phase 6: Loadouts
+- `index.html`: added loadout-bar (tabs + add button) and edit-header (counter + Save/Cancel)
+- `app.js`: loadout data model in localStorage, buildLoadoutBar(), enterEditMode(),
+  exitEditMode(), toggleEditSelection(), loadout-aware filteredStratagems() and renderGrid()
+- `style.css`: .loadout-bar, .loadout-tab, .edit-header, .card--edit-mode,
+  .card--selected, .grid--loadout (2-col large cards)
+
 ### 2026-03-16 — Phase 5: Polish & Docs
 - `README.md`: full rewrite — Windows+WSL setup, WiFi/USB connection, troubleshooting
 - `server/app.py`: added `_print_wifi_info()` — prints IPs + QR code when `--host 0.0.0.0`

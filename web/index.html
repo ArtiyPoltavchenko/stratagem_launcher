@@ -22,6 +22,22 @@
     <button class="settings-btn" id="settings-btn" aria-label="Settings">⚙</button>
   </header>
 
+  <!-- Loadout bar -->
+  <div class="loadout-bar" id="loadout-bar">
+    <div class="loadout-tabs" id="loadout-tabs"></div>
+    <button class="loadout-add-btn" id="loadout-add-btn" aria-label="New loadout">＋</button>
+  </div>
+
+  <!-- Edit mode header (hidden by default) -->
+  <div class="edit-header hidden" id="edit-header">
+    <span class="edit-header__label">Select stratagems</span>
+    <span class="edit-header__counter" id="edit-counter">0 / 4</span>
+    <div class="edit-header__actions">
+      <button class="btn-edit-action" id="edit-cancel-btn">Cancel</button>
+      <button class="btn-edit-action btn-edit-action--save" id="edit-save-btn">Save</button>
+    </div>
+  </div>
+
   <nav class="tabs" id="tabs" role="tablist">
     <button class="tab tab--active" data-cat="all" style="--tab-color:#f5c518" role="tab">All</button>
   </nav>

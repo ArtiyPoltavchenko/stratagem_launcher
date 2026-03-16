@@ -37,6 +37,13 @@ let iconRepo = '';
 let activeCategory = 'all';
 let searchQuery = '';
 
+// Loadout state
+const LOADOUTS_KEY = 'sl_loadouts';
+let loadouts = [];          // [{ id, name, stratagems: [id, ...] }]
+let activeLoadoutId = null; // null = show All
+let editLoadoutId = null;   // null = not editing
+let editSelection = [];     // ids selected during edit
+
 // ------------------------------------------------------------------ API
 
 async function apiFetch(path, options = {}) {
@@ -79,6 +86,137 @@ function setStatus(state, text) {
   label.textContent = text;
 }
 
+// ---------------------------------------------------------------- loadouts
+
+function loadLoadoutsFromStorage() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LOADOUTS_KEY));
+    if (Array.isArray(raw)) loadouts = raw;
+  } catch { /* ignore */ }
+}
+
+function saveLoadoutsToStorage() {
+  localStorage.setItem(LOADOUTS_KEY, JSON.stringify(loadouts));
+}
+
+function getLoadout(id) {
+  return loadouts.find(l => l.id === id) || null;
+}
+
+function makeLoadoutId() {
+  return 'l_' + Date.now();
+}
+
+function buildLoadoutBar() {
+  const tabsEl = document.getElementById('loadout-tabs');
+  tabsEl.innerHTML = '';
+
+  // "All" tab
+  tabsEl.appendChild(makeLoadoutTab(null, 'All'));
+
+  for (const l of loadouts) {
+    tabsEl.appendChild(makeLoadoutTab(l.id, l.name));
+  }
+}
+
+function makeLoadoutTab(id, name) {
+  const btn = document.createElement('button');
+  btn.className = 'loadout-tab' + (activeLoadoutId === id ? ' loadout-tab--active' : '');
+  btn.dataset.lid = id ?? '';
+
+  const label = document.createElement('span');
+  label.textContent = name;
+  btn.appendChild(label);
+
+  // Edit pencil (not on "All")
+  if (id !== null) {
+    const edit = document.createElement('button');
+    edit.className = 'loadout-tab__edit';
+    edit.textContent = '✎';
+    edit.title = 'Edit loadout';
+    edit.addEventListener('click', e => {
+      e.stopPropagation();
+      enterEditMode(id);
+    });
+    btn.appendChild(edit);
+  }
+
+  btn.addEventListener('click', () => {
+    if (editLoadoutId !== null) return;
+    activeLoadoutId = id;
+    buildLoadoutBar();
+    updateAllModeVisibility();
+    renderGrid();
+  });
+
+  return btn;
+}
+
+function updateAllModeVisibility() {
+  const isAll = activeLoadoutId === null;
+  document.getElementById('tabs').style.display = isAll ? '' : 'none';
+  document.querySelector('.search-wrap').style.display = isAll ? '' : 'none';
+}
+
+// ----------------------------------------------------------- edit mode
+
+function enterEditMode(loadoutId) {
+  editLoadoutId = loadoutId;
+  editSelection = [...(getLoadout(loadoutId)?.stratagems ?? [])];
+  activeLoadoutId = null; // show all cards for selection
+
+  document.getElementById('edit-header').classList.remove('hidden');
+  document.getElementById('loadout-bar').style.opacity = '0.4';
+  document.getElementById('loadout-bar').style.pointerEvents = 'none';
+  updateEditCounter();
+  updateAllModeVisibility();
+  renderGrid();
+}
+
+function exitEditMode(save) {
+  if (save && editLoadoutId !== null) {
+    const l = getLoadout(editLoadoutId);
+    if (l) {
+      l.stratagems = [...editSelection];
+      saveLoadoutsToStorage();
+    }
+  }
+  editLoadoutId = null;
+  editSelection = [];
+
+  document.getElementById('edit-header').classList.add('hidden');
+  document.getElementById('loadout-bar').style.opacity = '';
+  document.getElementById('loadout-bar').style.pointerEvents = '';
+  buildLoadoutBar();
+  updateAllModeVisibility();
+  renderGrid();
+}
+
+function updateEditCounter() {
+  document.getElementById('edit-counter').textContent =
+    `${editSelection.length} / 4`;
+}
+
+function toggleEditSelection(id) {
+  const idx = editSelection.indexOf(id);
+  if (idx >= 0) {
+    editSelection.splice(idx, 1);
+  } else {
+    if (editSelection.length >= 4) {
+      showToast('Max 4 stratagems per loadout', 'busy');
+      return;
+    }
+    editSelection.push(id);
+  }
+  updateEditCounter();
+
+  // Update just this card's visual without full re-render
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  if (card) {
+    card.classList.toggle('card--selected', editSelection.includes(id));
+  }
+}
+
 // ------------------------------------------------------------------ render
 
 function buildTabs() {
@@ -110,6 +248,16 @@ function makeTab(id, name, color, active) {
 
 function filteredStratagems() {
   let list = allStratagems;
+
+  // In edit mode: show all (for selection), filtered by category/search
+  // In loadout mode: show only loadout stratagems
+  if (editLoadoutId === null && activeLoadoutId !== null) {
+    const ids = getLoadout(activeLoadoutId)?.stratagems ?? [];
+    // Preserve loadout order
+    list = ids.map(id => allStratagems.find(s => s.id === id)).filter(Boolean);
+    return list;
+  }
+
   if (activeCategory !== 'all') {
     list = list.filter(s => s.category === activeCategory);
   }
@@ -123,28 +271,40 @@ function filteredStratagems() {
 function renderGrid() {
   const grid = document.getElementById('grid');
   const list = filteredStratagems();
+  const inLoadoutView = editLoadoutId === null && activeLoadoutId !== null;
+  const inEditMode = editLoadoutId !== null;
+
+  grid.className = 'grid' + (inLoadoutView ? ' grid--loadout' : '');
   grid.innerHTML = '';
 
   if (!list.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'No stratagems found';
+    empty.textContent = inLoadoutView
+      ? 'Loadout is empty — tap ✎ to add stratagems'
+      : 'No stratagems found';
     grid.appendChild(empty);
     return;
   }
 
   const frag = document.createDocumentFragment();
   for (const s of list) {
-    frag.appendChild(makeCard(s));
+    frag.appendChild(makeCard(s, inEditMode));
   }
   grid.appendChild(frag);
 }
 
-function makeCard(s) {
+function makeCard(s, inEditMode = false) {
   const catColor = categories[s.category]?.color || '#888';
 
+  const isSelected = inEditMode && editSelection.includes(s.id);
   const card = document.createElement('div');
-  card.className = 'card' + (s.verified === false ? ' card--unverified' : '');
+  card.className = [
+    'card',
+    s.verified === false ? 'card--unverified' : '',
+    inEditMode ? 'card--edit-mode' : '',
+    isSelected ? 'card--selected' : '',
+  ].filter(Boolean).join(' ');
   card.style.setProperty('--card-accent', catColor);
   card.role = 'listitem';
   card.setAttribute('aria-label', s.name);
@@ -190,7 +350,13 @@ function makeCard(s) {
   }
 
   // Tap handler
-  card.addEventListener('click', () => onCardTap(card, s));
+  card.addEventListener('click', () => {
+    if (editLoadoutId !== null) {
+      toggleEditSelection(s.id);
+    } else {
+      onCardTap(card, s);
+    }
+  });
 
   return card;
 }
@@ -404,9 +570,28 @@ function initSearch() {
 
 // ------------------------------------------------------------------ boot
 
+function initLoadouts() {
+  loadLoadoutsFromStorage();
+  buildLoadoutBar();
+
+  document.getElementById('loadout-add-btn').addEventListener('click', () => {
+    if (editLoadoutId !== null) return;
+    const name = `Loadout ${loadouts.length + 1}`;
+    const newL = { id: makeLoadoutId(), name, stratagems: [] };
+    loadouts.push(newL);
+    saveLoadoutsToStorage();
+    buildLoadoutBar();
+    enterEditMode(newL.id);
+  });
+
+  document.getElementById('edit-save-btn').addEventListener('click', () => exitEditMode(true));
+  document.getElementById('edit-cancel-btn').addEventListener('click', () => exitEditMode(false));
+}
+
 async function boot() {
   initSettings();
   initSearch();
+  initLoadouts();
   setStatus('checking', 'Connecting…');
 
   try {

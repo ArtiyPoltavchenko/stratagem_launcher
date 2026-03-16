@@ -37,13 +37,15 @@
 - [x] QR code on server startup (WiFi mode) — uses qrcode lib, graceful fallback if missing
 - [x] docs/testing_checklist.md — full manual test checklist
 
-## Phase 6: Loadouts & Extras (optional)
-- [ ] Custom Loadouts: select 4 stratagems → save preset → show only those on main screen
-- [ ] Loadout persistence in localStorage
-- [ ] Quick switch between presets (swipe or tabs)
-- [ ] WebSocket for instant feedback
-- [ ] Sound effects on execution
-- [ ] ngrok setup documentation
+## Phase 6: Loadouts & Extras ✅
+- [x] Custom Loadouts: tap + → name → select up to 4 → Save
+- [x] Loadout persistence in localStorage
+- [x] Quick switch between loadouts via tabs in loadout bar
+- [x] Loadout view: 2-column grid with larger cards
+- [x] Edit mode: card selection overlay, counter 0/4, Cancel/Save
+- [ ] WebSocket for instant feedback (Phase 6 extra, skipped)
+- [ ] Sound effects on execution (Phase 6 extra, skipped)
+- [ ] ngrok setup documentation (Phase 6 extra, skipped)
 
 ## Phase 7: Manual Input Mode (D-pad)
 - [ ] Server endpoints: POST /api/manual/start, /api/manual/key, /api/manual/stop
