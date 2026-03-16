@@ -46,8 +46,9 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------- constants
 
 WINDOW_TITLE = "Stratagem Launcher — Server Manager"
-WINDOW_MIN_W = 680
-WINDOW_MIN_H = 580
+WINDOW_MIN_W = 800
+WINDOW_MIN_H = 620
+WINDOW_INIT   = "960x700"
 
 COLOR_RUN   = "#4caf50"
 COLOR_STOP  = "#f44336"
@@ -144,7 +145,7 @@ class ServerManagerApp:
         # Shared mutable config — slider updates it live while server is running
         self._cfg = Config()
 
-        self._mode_var = tk.StringVar(value="wifi")
+        self._mode_var = tk.StringVar(value="wifi")   # "wifi" | "local" | "usb"
         self._port_var = tk.StringVar(value="5000")
         self._delay_var = tk.IntVar(value=50)
 
@@ -181,7 +182,7 @@ class ServerManagerApp:
         content = tk.Frame(self.root, bg=COLOR_BG)
         content.pack(fill="both", expand=True, padx=10, pady=8)
 
-        left = tk.Frame(content, bg=COLOR_BG, width=290)
+        left = tk.Frame(content, bg=COLOR_BG, width=330)
         left.pack(side="left", fill="y", padx=(0, 8))
         left.pack_propagate(False)
 
@@ -219,18 +220,28 @@ class ServerManagerApp:
         sett.pack(fill="x", pady=(0, 8))
 
         mode_row = tk.Frame(sett, bg=COLOR_PANEL)
-        mode_row.pack(fill="x", padx=10, pady=(8, 4))
+        mode_row.pack(fill="x", padx=10, pady=(8, 2))
         tk.Label(
             mode_row, text="Mode:", bg=COLOR_PANEL, fg=COLOR_DIM,
             font=("Segoe UI", 9),
         ).pack(side="left", padx=(0, 8))
-        for label, value in [("WiFi (0.0.0.0)", "wifi"), ("Localhost only", "local")]:
+        for label, value in [
+            ("WiFi (0.0.0.0)", "wifi"),
+            ("Localhost", "local"),
+            ("USB (ADB)", "usb"),
+        ]:
             tk.Radiobutton(
                 mode_row, text=label, variable=self._mode_var, value=value,
                 bg=COLOR_PANEL, fg=COLOR_FG, selectcolor=COLOR_BG,
                 activebackground=COLOR_PANEL, font=("Segoe UI", 9),
                 command=self._on_mode_change,
             ).pack(side="left", padx=(0, 8))
+
+        self._usb_hint = tk.Label(
+            sett, text="→ Run  scripts\\setup_usb.bat  then connect USB cable",
+            bg=COLOR_PANEL, fg=COLOR_YEL, font=("Segoe UI", 8),
+        )
+        # shown only in USB mode; hidden initially
 
         delay_row = tk.Frame(sett, bg=COLOR_PANEL)
         delay_row.pack(fill="x", padx=10, pady=(0, 10))
@@ -324,6 +335,14 @@ class ServerManagerApp:
     def _get_host(self) -> str:
         return "0.0.0.0" if self._mode_var.get() == "wifi" else "127.0.0.1"
 
+    def _on_mode_change(self) -> None:
+        mode = self._mode_var.get()
+        if mode == "usb":
+            self._usb_hint.pack(fill="x", padx=10, pady=(0, 8))
+        else:
+            self._usb_hint.pack_forget()
+        self._refresh_qr()
+
     def _get_port(self) -> int:
         try:
             return int(self._port_var.get())
@@ -332,18 +351,30 @@ class ServerManagerApp:
 
     def _refresh_qr(self) -> None:
         port = self._get_port()
+        mode = self._mode_var.get()
         lan = get_lan_ip()
-        if lan and self._mode_var.get() == "wifi":
+
+        if mode == "wifi" and lan:
             wifi_url = f"http://{lan}:{port}"
             self._wifi_url_var.set(wifi_url)
         else:
             wifi_url = ""
             self._wifi_url_var.set("—")
+
         self._usb_url_var.set(f"http://localhost:{port}")
+
+        # QR code: only useful in WiFi mode
+        if mode == "usb":
+            self._qr_label.configure(
+                image="", text="Connect USB cable + run setup_usb.bat",
+                fg=COLOR_DIM, font=("Segoe UI", 8),
+            )
+            self._qr_image = None
+            return
 
         if not wifi_url:
             self._qr_label.configure(
-                image="", text="(WiFi mode to show QR)",
+                image="", text="(Switch to WiFi mode to show QR)",
                 fg=COLOR_DIM, font=("Segoe UI", 8),
             )
             self._qr_image = None
@@ -353,7 +384,7 @@ class ServerManagerApp:
             import qrcode
             from PIL import Image, ImageTk
             img = qrcode.make(wifi_url)
-            img = img.resize((140, 140), Image.LANCZOS)
+            img = img.resize((160, 160), Image.LANCZOS)
             self._qr_image = ImageTk.PhotoImage(img)
             self._qr_label.configure(image=self._qr_image, text="")
         except ImportError:
@@ -361,9 +392,6 @@ class ServerManagerApp:
                 image="", text=wifi_url, fg=COLOR_YEL, font=("Consolas", 7),
             )
             self._qr_image = None
-
-    def _on_mode_change(self) -> None:
-        self._refresh_qr()
 
     def _on_delay_change(self, val: str) -> None:
         ms = int(val)
@@ -453,6 +481,7 @@ class ServerManagerApp:
 
 def main() -> None:
     root = tk.Tk()
+    root.geometry(WINDOW_INIT)
     ServerManagerApp(root)
     root.mainloop()
 

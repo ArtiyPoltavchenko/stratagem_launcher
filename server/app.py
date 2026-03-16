@@ -1,7 +1,9 @@
 """Stratagem Launcher — Flask application."""
 
 import argparse
+import json
 import logging
+import sys
 import time
 from pathlib import Path
 
@@ -21,7 +23,18 @@ log = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).parent.parent / "web"
 
 
-def create_app(cfg: Config = _default_config) -> Flask:
+def _loadouts_path() -> Path:
+    """Return writable path for loadouts.json.
+
+    In a PyInstaller --onefile bundle sys.frozen is set; the _MEIPASS temp
+    dir is read-only so we store the file next to the .exe instead.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent / "loadouts.json"
+    return Path(__file__).parent.parent / "data" / "loadouts.json"
+
+
+def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None) -> Flask:
     """Application factory."""
     app = Flask(__name__, static_folder=None)
     CORS(app, origins=["http://localhost:*", "http://127.0.0.1:*", "http://192.168.*"])
@@ -30,8 +43,9 @@ def create_app(cfg: Config = _default_config) -> Flask:
     stratagems.load()
     log.info("Loaded %d stratagems", len(stratagems.get_all()))
 
-    # Attach config to app for access in routes
+    # Attach config and loadouts path to app for access in routes
     app.config["SL_CONFIG"] = cfg
+    app.config["SL_LOADOUTS_PATH"] = loadouts_path or _loadouts_path()
 
     # ------------------------------------------------------------------ static
 
@@ -84,6 +98,57 @@ def create_app(cfg: Config = _default_config) -> Flask:
         log.info("Executed: %s %s", s["name"], s["keys"])
         return jsonify({"status": "ok", "stratagem": s["name"], "keys": s["keys"]})
 
+    # ------------------------------------------------------------ manual mode
+
+    @app.route("/api/manual/start", methods=["POST"])
+    def manual_start():
+        sl_cfg: Config = app.config["SL_CONFIG"]
+        body = request.get_json(silent=True) or {}
+        timeout = float(body.get("timeout", 3.0))
+
+        try:
+            started = keypress.manual_start(
+                ctrl_delay=sl_cfg.ctrl_hold_delay,
+                timeout=timeout,
+            )
+        except RuntimeError as e:
+            return jsonify({"status": "error", "message": str(e)}), 503
+
+        if not started:
+            return jsonify({"status": "busy", "message": "Already executing or manual mode active"}), 503
+
+        log.info("Manual mode started (timeout=%.1fs)", timeout)
+        return jsonify({"status": "ok", "manual": True})
+
+    @app.route("/api/manual/key", methods=["POST"])
+    def manual_key():
+        body = request.get_json(silent=True) or {}
+        direction = body.get("direction", "").strip()
+
+        if not direction:
+            return jsonify({"status": "error", "message": "Missing field: direction"}), 400
+
+        try:
+            ok = keypress.manual_key(direction)
+        except ValueError as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        if not ok:
+            return jsonify({"status": "error", "message": "Manual mode not active"}), 409
+
+        log.info("Manual key: %s", direction)
+        return jsonify({"status": "ok", "direction": direction})
+
+    @app.route("/api/manual/stop", methods=["POST"])
+    def manual_stop():
+        stopped = keypress.manual_stop()
+        log.info("Manual mode stopped (was_active=%s)", stopped)
+        return jsonify({"status": "ok", "stopped": stopped})
+
+    @app.route("/api/manual/status", methods=["GET"])
+    def manual_status():
+        return jsonify({"active": keypress.is_manual_active()})
+
     @app.route("/api/settings", methods=["GET"])
     def get_settings():
         sl_cfg: Config = app.config["SL_CONFIG"]
@@ -92,6 +157,27 @@ def create_app(cfg: Config = _default_config) -> Flask:
             "ctrl_hold_delay_ms": sl_cfg.ctrl_hold_delay_ms,
             "version": "1.0.0",
         })
+
+    @app.route("/api/loadouts", methods=["GET"])
+    def get_loadouts():
+        path: Path = app.config["SL_LOADOUTS_PATH"]
+        try:
+            with path.open(encoding="utf-8") as f:
+                return jsonify(json.load(f))
+        except FileNotFoundError:
+            return jsonify([])
+
+    @app.route("/api/loadouts", methods=["PUT"])
+    def put_loadouts():
+        path: Path = app.config["SL_LOADOUTS_PATH"]
+        body = request.get_json(silent=True)
+        if not isinstance(body, list):
+            return jsonify({"status": "error", "message": "Expected JSON array"}), 400
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
+            json.dump(body, f)
+        log.info("Loadouts saved (%d)", len(body))
+        return jsonify({"status": "ok", "count": len(body)})
 
     @app.route("/api/settings", methods=["POST"])
     def update_settings():

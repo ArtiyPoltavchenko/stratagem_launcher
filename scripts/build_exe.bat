@@ -21,6 +21,10 @@ pyinstaller ^
     --add-data "data;data" ^
     --add-data "web;web" ^
     --add-data "server;server" ^
+    --collect-all PIL ^
+    --collect-all qrcode ^
+    --hidden-import PIL.ImageTk ^
+    --hidden-import PIL.Image ^
     desktop\server_manager.py
 
 if errorlevel 1 (

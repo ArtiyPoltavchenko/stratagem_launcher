@@ -1,6 +1,7 @@
 """Tests for server/app.py — Flask test client, all endpoints + error cases."""
 
 import pytest
+from pathlib import Path
 from unittest.mock import patch
 
 from server.app import create_app
@@ -18,6 +19,20 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def loadouts_app(tmp_path):
+    """App variant with loadouts stored in a temp directory."""
+    cfg = Config(key_delay_ms=0, ctrl_hold_delay_ms=0)
+    application = create_app(cfg, loadouts_path=tmp_path / "loadouts.json")
+    application.config["TESTING"] = True
+    return application
+
+
+@pytest.fixture
+def loadouts_client(loadouts_app):
+    return loadouts_app.test_client()
 
 
 class TestHealth:
@@ -121,3 +136,105 @@ class TestSettings:
         client.post("/api/settings", json={"key_delay_ms": 123})
         data = client.get("/api/settings").get_json()
         assert data["key_delay_ms"] == 123
+
+
+class TestManualAPI:
+    def test_start_ok(self, client):
+        with patch("server.keypress.manual_start", return_value=True):
+            r = client.post("/api/manual/start")
+        assert r.status_code == 200
+        assert r.get_json()["status"] == "ok"
+        assert r.get_json()["manual"] is True
+
+    def test_start_busy(self, client):
+        with patch("server.keypress.manual_start", return_value=False):
+            r = client.post("/api/manual/start")
+        assert r.status_code == 503
+        assert r.get_json()["status"] == "busy"
+
+    def test_start_unavailable(self, client):
+        with patch("server.keypress.manual_start", side_effect=RuntimeError("no pynput")):
+            r = client.post("/api/manual/start")
+        assert r.status_code == 503
+
+    def test_key_ok(self, client):
+        with patch("server.keypress.manual_key", return_value=True):
+            r = client.post("/api/manual/key", json={"direction": "up"})
+        assert r.status_code == 200
+        assert r.get_json()["direction"] == "up"
+
+    def test_key_missing_direction(self, client):
+        r = client.post("/api/manual/key", json={})
+        assert r.status_code == 400
+
+    def test_key_invalid_direction(self, client):
+        with patch("server.keypress.manual_key", side_effect=ValueError("bad")):
+            r = client.post("/api/manual/key", json={"direction": "diagonal"})
+        assert r.status_code == 400
+
+    def test_key_not_active(self, client):
+        with patch("server.keypress.manual_key", return_value=False):
+            r = client.post("/api/manual/key", json={"direction": "up"})
+        assert r.status_code == 409
+
+    def test_stop_ok(self, client):
+        with patch("server.keypress.manual_stop", return_value=True):
+            r = client.post("/api/manual/stop")
+        assert r.status_code == 200
+        assert r.get_json()["stopped"] is True
+
+    def test_stop_idempotent(self, client):
+        with patch("server.keypress.manual_stop", return_value=False):
+            r = client.post("/api/manual/stop")
+        assert r.status_code == 200
+        assert r.get_json()["stopped"] is False
+
+    def test_status_inactive(self, client):
+        with patch("server.keypress.is_manual_active", return_value=False):
+            r = client.get("/api/manual/status")
+        assert r.status_code == 200
+        assert r.get_json()["active"] is False
+
+    def test_status_active(self, client):
+        with patch("server.keypress.is_manual_active", return_value=True):
+            r = client.get("/api/manual/status")
+        assert r.get_json()["active"] is True
+
+
+class TestLoadouts:
+    def test_get_empty(self, loadouts_client):
+        r = loadouts_client.get("/api/loadouts")
+        assert r.status_code == 200
+        assert r.get_json() == []
+
+    def test_put_and_get(self, loadouts_client):
+        payload = [{"id": "l_1", "name": "My Loadout", "stratagems": ["orbital_precision_strike"]}]
+        r = loadouts_client.put("/api/loadouts", json=payload)
+        assert r.status_code == 200
+        assert r.get_json()["status"] == "ok"
+        assert r.get_json()["count"] == 1
+
+        r2 = loadouts_client.get("/api/loadouts")
+        assert r2.status_code == 200
+        data = r2.get_json()
+        assert len(data) == 1
+        assert data[0]["id"] == "l_1"
+        assert data[0]["name"] == "My Loadout"
+
+    def test_put_replaces(self, loadouts_client):
+        loadouts_client.put("/api/loadouts", json=[{"id": "l_1", "name": "A", "stratagems": []}])
+        loadouts_client.put("/api/loadouts", json=[{"id": "l_2", "name": "B", "stratagems": []}])
+        r = loadouts_client.get("/api/loadouts")
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["id"] == "l_2"
+
+    def test_put_empty_clears(self, loadouts_client):
+        loadouts_client.put("/api/loadouts", json=[{"id": "l_1", "name": "A", "stratagems": []}])
+        loadouts_client.put("/api/loadouts", json=[])
+        r = loadouts_client.get("/api/loadouts")
+        assert r.get_json() == []
+
+    def test_put_invalid_body(self, loadouts_client):
+        r = loadouts_client.put("/api/loadouts", json={"not": "a list"})
+        assert r.status_code == 400

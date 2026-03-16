@@ -113,6 +113,22 @@ function loadLoadoutsFromStorage() {
 
 function saveLoadoutsToStorage() {
   localStorage.setItem(LOADOUTS_KEY, JSON.stringify(loadouts));
+  // Push to server so loadouts survive IP/origin changes
+  apiFetch('/api/loadouts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loadouts),
+  }).catch(() => {});
+}
+
+async function syncLoadoutsFromServer() {
+  try {
+    const data = await apiFetch('/api/loadouts');
+    if (Array.isArray(data) && data.length > 0) {
+      loadouts = data;
+      localStorage.setItem(LOADOUTS_KEY, JSON.stringify(loadouts));
+    }
+  } catch { /* offline — keep localStorage version */ }
 }
 
 function getLoadout(id) {
@@ -751,6 +767,8 @@ async function boot() {
 
   try {
     await loadStratagems();
+    await syncLoadoutsFromServer();
+    buildLoadoutBar();
     buildTabs();
     renderGrid();
     setStatus('ok', 'Connected');
