@@ -7,6 +7,8 @@
 const ARROW = { up: '▲', down: '▼', left: '◀', right: '▶' };
 const STORAGE_KEY = 'sl_settings';
 const HEALTH_INTERVAL = 10_000;
+const COOLDOWN_MOD_KEY = 'sl_cooldown_modifier';
+const SHOW_COOLDOWNS_KEY = 'sl_show_cooldowns';
 
 // ------------------------------------------------------------------ settings
 
@@ -27,6 +29,20 @@ function getServerBase() {
   const saved = loadSettings().serverIp;
   if (saved) return `http://${saved}`;
   return `${location.protocol}//${location.host}`;
+}
+
+function getCooldownModifier() {
+  return parseInt(localStorage.getItem(COOLDOWN_MOD_KEY) || '0', 10);
+}
+
+function isShowCooldowns() {
+  const val = localStorage.getItem(SHOW_COOLDOWNS_KEY);
+  return val === null ? true : val === 'true';
+}
+
+function getEffectiveCooldown(s) {
+  const mod = getCooldownModifier();
+  return Math.round(s.cooldown * (1 - mod / 100));
 }
 
 // ------------------------------------------------------------------ state
@@ -342,6 +358,20 @@ function makeCard(s, inEditMode = false) {
   }
   card.appendChild(keys);
 
+  // Static cooldown label (base or modified)
+  if (s.cooldown > 0 && isShowCooldowns()) {
+    const cdLabel = document.createElement('div');
+    cdLabel.className = 'card__cd-label';
+    const modifier = getCooldownModifier();
+    const effective = getEffectiveCooldown(s);
+    if (modifier > 0) {
+      cdLabel.innerHTML = `<s>${s.cooldown}s</s> ${effective}s`;
+    } else {
+      cdLabel.textContent = `${s.cooldown}s`;
+    }
+    card.appendChild(cdLabel);
+  }
+
   // Cooldown overlay (hidden by default)
   if (s.cooldown > 0) {
     const cd = document.createElement('div');
@@ -420,6 +450,7 @@ const _cooldownTimers = new Map(); // id → intervalId
 
 function startCooldown(card, s) {
   if (!s.cooldown || s.cooldown <= 0) return;
+  if (!isShowCooldowns()) return;
 
   const overlay = card.querySelector('.card__cooldown');
   if (!overlay) return;
@@ -429,7 +460,7 @@ function startCooldown(card, s) {
     clearInterval(_cooldownTimers.get(s.id));
   }
 
-  let remaining = s.cooldown;
+  let remaining = getEffectiveCooldown(s);
   overlay.textContent = remaining + 's';
   overlay.classList.remove('hidden');
   card.classList.add('card--on-cooldown');
@@ -504,6 +535,10 @@ function initSettings() {
   const ipInput = document.getElementById('setting-ip');
   const delayInput = document.getElementById('setting-delay');
   const delayValue = document.getElementById('delay-value');
+  const cdModSlider = document.getElementById('setting-cd-modifier');
+  const cdModNum = document.getElementById('setting-cd-modifier-num');
+  const cdModValue = document.getElementById('cd-modifier-value');
+  const showCdCheck = document.getElementById('setting-show-cooldowns');
 
   // Load saved values
   const s = loadSettings();
@@ -513,8 +548,32 @@ function initSettings() {
     delayValue.textContent = s.keyDelayMs;
   }
 
+  const savedMod = getCooldownModifier();
+  cdModSlider.value = savedMod;
+  cdModNum.value = savedMod;
+  cdModValue.textContent = savedMod;
+
+  showCdCheck.checked = isShowCooldowns();
+
   delayInput.addEventListener('input', () => {
     delayValue.textContent = delayInput.value;
+  });
+
+  function applyModifier(val) {
+    const clamped = Math.min(50, Math.max(0, Math.round(val / 5) * 5));
+    cdModSlider.value = clamped;
+    cdModNum.value = clamped;
+    cdModValue.textContent = clamped;
+    localStorage.setItem(COOLDOWN_MOD_KEY, clamped);
+    renderGrid();
+  }
+
+  cdModSlider.addEventListener('input', () => applyModifier(parseInt(cdModSlider.value, 10)));
+  cdModNum.addEventListener('input', () => applyModifier(parseInt(cdModNum.value, 10) || 0));
+
+  showCdCheck.addEventListener('change', () => {
+    localStorage.setItem(SHOW_COOLDOWNS_KEY, showCdCheck.checked);
+    renderGrid();
   });
 
   openBtn.addEventListener('click', () => overlay.classList.remove('hidden'));
@@ -568,6 +627,101 @@ function initSearch() {
   });
 }
 
+// ------------------------------------------------------------------- d-pad
+
+let dpadActive = false;
+let dpadSequence = [];
+
+function initDpad() {
+  document.getElementById('dpad-open-btn').addEventListener('click', openDpad);
+  document.getElementById('dpad-close-btn').addEventListener('click', closeDpad);
+  document.getElementById('dpad-execute-btn').addEventListener('click', dpadExecute);
+
+  document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
+    btn.addEventListener('click', () => dpadTap(btn.dataset.dir));
+  });
+}
+
+async function openDpad() {
+  dpadSequence = [];
+  renderDpadSequence();
+  document.getElementById('dpad-overlay').classList.remove('hidden');
+
+  try {
+    await apiFetch('/api/manual/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    dpadActive = true;
+    setDpadStatus(true);
+  } catch {
+    showToast('Cannot start manual mode — check connection', 'error');
+    document.getElementById('dpad-overlay').classList.add('hidden');
+  }
+}
+
+async function closeDpad() {
+  await apiFetch('/api/manual/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  dpadActive = false;
+  dpadSequence = [];
+  setDpadStatus(false);
+  document.getElementById('dpad-overlay').classList.add('hidden');
+}
+
+async function dpadExecute() {
+  await closeDpad();
+}
+
+async function dpadTap(direction) {
+  if (!dpadActive) return;
+  if (navigator.vibrate) navigator.vibrate(30);
+
+  // Flash the button
+  const btn = document.querySelector(`.dpad-btn[data-dir="${direction}"]`);
+  if (btn) {
+    btn.classList.add('dpad-btn--flash');
+    setTimeout(() => btn.classList.remove('dpad-btn--flash'), 150);
+  }
+
+  try {
+    await apiFetch('/api/manual/key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ direction }),
+    });
+    dpadSequence.push(direction);
+    renderDpadSequence();
+  } catch (err) {
+    if (err.status === 409) {
+      // Manual mode timed out server-side — reflect that in UI
+      dpadActive = false;
+      setDpadStatus(false);
+      showToast('Ctrl released (timeout) — tap to restart', 'busy');
+    } else {
+      showToast('Connection lost', 'error');
+    }
+  }
+}
+
+function renderDpadSequence() {
+  const el = document.getElementById('dpad-sequence');
+  el.innerHTML = '';
+  for (const dir of dpadSequence) {
+    const span = document.createElement('span');
+    span.className = 'dpad-seq-arrow';
+    span.textContent = ARROW[dir] || dir;
+    el.appendChild(span);
+  }
+}
+
+function setDpadStatus(active) {
+  const el = document.getElementById('dpad-status');
+  if (active) {
+    el.textContent = 'Ctrl held — tap arrows, then EXECUTE';
+    el.classList.remove('dpad-status--inactive');
+  } else {
+    el.textContent = 'Ctrl released';
+    el.classList.add('dpad-status--inactive');
+  }
+}
+
 // ------------------------------------------------------------------ boot
 
 function initLoadouts() {
@@ -592,6 +746,7 @@ async function boot() {
   initSettings();
   initSearch();
   initLoadouts();
+  initDpad();
   setStatus('checking', 'Connecting…');
 
   try {

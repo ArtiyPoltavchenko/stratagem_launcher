@@ -1,68 +1,94 @@
 # Progress Tracker — Stratagem Launcher
 
-> Last updated: 2026-03-16
+> Last updated: 2026-03-16 (synced with orchestrator_report.md)
+> Tests: 67 passing
 
 ## Phase 1: Project Skeleton ✅
-- [x] Initialize project structure (directories, files)
-- [x] Create .venv, requirements.txt, requirements-dev.txt, .gitignore
-- [x] Validate stratagems.json loads correctly
-- [x] Create docs/ templates
-- [x] First git commit
+- [x] Directory structure, venv setup, requirements files
+- [x] stratagems.json with 59 stratagems, 6 categories
+- [x] scripts/validate_json.py — JSON integrity check
+- [x] docs/ templates, CLAUDE.md, PROJECT_SPEC.md
 
 ## Phase 2: Server Core ✅
-- [x] config.py — settings dataclass with CLI overrides
-- [x] stratagems.py — load, validate, query stratagems
-- [x] keypress.py — pynput key simulation with Ctrl+sequence (WSL-safe via try/except)
-- [x] app.py — Flask app with /api/execute, /api/stratagems, /api/health, /api/settings
-- [x] tests/ — pytest for all server modules (42/42 passing)
-- [x] Manual test: POST request → keys appear in Notepad ✅
+- [x] config.py — Config dataclass, CLI overrides
+- [x] stratagems.py — JSON load/validate/query, get_icon_repo()
+- [x] keypress.py — pynput via KeyCode.from_vk() (VK codes, WM_KEYDOWN)
+- [x] app.py — Flask: /api/stratagems, /api/execute, /api/health, /api/settings
+- [x] scripts/start_server.bat + start_server_wifi.bat
+- [x] requirements-dev.txt (WSL, no pynput)
+- [x] tests/ — 43 tests passing
 
 ## Phase 3: PWA Minimal ✅
-- [x] index.html — full structure: header, tabs, search, grid, settings overlay
-- [x] app.js — fetch stratagems, render grid, POST on tap, vibration, toasts, settings localStorage
-- [x] style.css — dark Helldivers theme, 4-col mobile grid, CSS variables
-- [x] manifest.json + sw.js — PWA installable, cache-first shell
-- [x] Flask serves web/ as static files
-- [x] Manual test: phone browser → tap button → keys on laptop ✅
+- [x] index.html, app.js, style.css — full app shell
+- [x] Dark Helldivers theme, 4-col mobile grid, CSS variables
+- [x] manifest.json + sw.js (PWA installable)
+- [x] Manual test: phone → tap → keys on laptop
 
 ## Phase 4: Full UI ✅
-- [x] SVG icons via icon_repo (nvigneux GitHub) — resolveIconUrl() builds full URL
-- [x] Cooldown timer on cards after tap (local countdown, resets on re-tap)
-- [x] Unverified badge — yellow "?" in card corner for verified: false
-- [x] App icons generated — web/icons/app-192.png, app-512.png (stdlib PNG generator)
+- [x] SVG icons via icon_repo (GitHub CDN), letter-SVG fallback offline
+- [x] Category tabs with filtering
+- [x] Search bar
+- [x] Cooldown timer overlay per card (local countdown, blocks re-tap)
+- [x] Unverified badge (?) for verified: false stratagems
+- [x] App icons: app-192.png + app-512.png (scripts/generate_icons.py)
 
 ## Phase 5: Polish & Docs ✅
-- [x] README.md — full rewrite: Windows setup, WiFi/USB connection, troubleshooting, WSL dev
-- [x] scripts/setup_usb.bat — adb reverse for USB mode
-- [x] QR code on server startup (WiFi mode) — uses qrcode lib, graceful fallback if missing
-- [x] docs/testing_checklist.md — full manual test checklist
+- [x] README.md — Windows + WSL setup, WiFi/USB, troubleshooting
+- [x] QR code on server startup (--host 0.0.0.0)
+- [x] scripts/setup_usb.bat — ADB port forwarding
+- [x] docs/testing_checklist.md
 
-## Phase 6: Loadouts & Extras ✅
-- [x] Custom Loadouts: tap + → name → select up to 4 → Save
-- [x] Loadout persistence in localStorage
-- [x] Quick switch between loadouts via tabs in loadout bar
-- [x] Loadout view: 2-column grid with larger cards
-- [x] Edit mode: card selection overlay, counter 0/4, Cancel/Save
-- [ ] WebSocket for instant feedback (Phase 6 extra, skipped)
-- [ ] Sound effects on execution (Phase 6 extra, skipped)
-- [ ] ngrok setup documentation (Phase 6 extra, skipped)
+## Phase 6: Loadouts ✅
+- [x] Loadout bar (tabs + ＋ button), ✎ edit button per loadout
+- [x] Edit mode: card selection overlay, X/4 counter, Save/Cancel
+- [x] Loadout view: 2-col large-card grid (in-game optimised)
+- [x] Persistence in localStorage (sl_loadouts)
 
-## Phase 7: Manual Input Mode (D-pad)
-- [ ] Server endpoints: POST /api/manual/start, /api/manual/key, /api/manual/stop
-- [ ] Server state machine: idle → manual_active → idle (with timeout)
-- [ ] D-pad UI component (portrait layout: bottom half, large thumb buttons)
-- [ ] D-pad UI component (landscape layout: gamepad style, D-pad left, Execute right)
-- [ ] CSS media queries for orientation switching
-- [ ] Visual sequence display (show entered arrows at top)
-- [ ] Haptic feedback per tap
-- [ ] Auto-release Ctrl after 3s timeout (configurable)
-- [ ] Tests for manual mode endpoints
+## Phase 7: Manual D-pad Input ✅
+- [x] Server: manual_start(), manual_key(), manual_stop(), is_manual_active()
+- [x] State machine: idle → active → idle; threading.Timer auto-release 3s
+- [x] API: POST /api/manual/start, /key, /stop; GET /api/manual/status
+- [x] D-pad overlay: ✛ button → full-screen overlay
+- [x] Portrait: cross at bottom, EXECUTE above
+- [x] Landscape: cross left, EXECUTE right (@media orientation: landscape)
+- [x] Visual sequence bar + haptic feedback (30ms)
+- [x] 67 tests total, all passing
+
+---
+
+## Phase 8: Cooldown Modifier (frontend-only)
+- [ ] Settings UI: range slider (0–50%) + input field, synced
+- [ ] Recalculate cooldown timers using modifier
+- [ ] Toggle: "Show cooldowns on cards" checkbox
+- [ ] Display modified cooldown on cards (strikethrough old + new)
+- [ ] localStorage persistence (sl_cooldown_modifier, sl_show_cooldowns)
+- [ ] Works in loadout view too
+- [ ] 67+ existing tests still pass
+
+## Phase 9: Desktop EXE — Server Manager
+- [ ] desktop/server_manager.py — tkinter GUI skeleton
+- [ ] Server thread (werkzeug.make_server, start/stop/restart)
+- [ ] Connection info panel (auto IP, copy buttons)
+- [ ] QR code display (qrcode → PIL → ImageTk)
+- [ ] Log viewer (ScrolledText + custom logging handler + thread-safe)
+- [ ] Settings panel (mode radio, key delay slider)
+- [ ] Resource path helper for PyInstaller bundling
+- [ ] scripts/build_exe.bat
+- [ ] Test: build .exe, run standalone, connect from phone
+- [ ] 67+ existing tests still pass
+
+## Phase 8: Ship Module Cooldown Modifier ✅
+- [x] Cooldown reduction slider in Settings (0–50%, step 5) + synced number input
+- [x] `getCooldownModifier()` / `isShowCooldowns()` / `getEffectiveCooldown()` helpers
+- [x] Static cooldown label on cards (`~~100s~~ 75s` when modifier > 0)
+- [x] Toggle: "Show cooldowns on cards" checkbox — hides labels + disables blocking
+- [x] Live grid re-render on modifier/checkbox change; persisted to localStorage
+- [x] 67 existing tests unchanged
 
 ## Blockers & Issues
-(Claude Code logs issues here)
 
 | Date | Issue | Status | Resolution |
 |------|-------|--------|------------|
-| 2026-03-16 | scripts/*.bat overwritten (used `python server\app.py` instead of `python -m server.app`) | ✅ Fixed | Restored `python -m server.app` in both bat files |
-| 2026-03-16 | stratagems.json updated to v2.0.0 with icon_repo field | ✅ Fixed | app.js now reads icon_repo, stratagems.py exposes get_icon_repo() |
-| 2026-03-16 | test_get_all_count hardcoded 58, JSON now has 59 | ✅ Fixed | Changed to `len > 0` |
+| 2026-03-16 | start_server*.bat used wrong python command | ✅ Fixed | Restored `python -m server.app` |
+| 2026-03-16 | stratagems.json v2 icon_repo ignored by old app.js | ✅ Fixed | Added resolveIconUrl() |
+| 2026-03-16 | pynput raw chars unreliable in games | ✅ Fixed | KeyCode.from_vk() VK codes |

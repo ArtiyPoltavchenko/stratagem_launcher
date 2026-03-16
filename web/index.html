@@ -19,6 +19,7 @@
       <span class="status-dot" id="status-dot"></span>
       <span id="status-text">connecting…</span>
     </div>
+    <button class="dpad-open-btn" id="dpad-open-btn" aria-label="Manual D-pad">✛</button>
     <button class="settings-btn" id="settings-btn" aria-label="Settings">⚙</button>
   </header>
 
@@ -62,6 +63,31 @@
 
   <div class="toast-container" id="toasts"></div>
 
+  <!-- D-pad overlay -->
+  <div class="dpad-overlay hidden" id="dpad-overlay">
+
+    <div class="dpad-topbar">
+      <div class="dpad-sequence" id="dpad-sequence"></div>
+      <button class="dpad-close-btn" id="dpad-close-btn" aria-label="Close D-pad">✕</button>
+    </div>
+
+    <div class="dpad-status" id="dpad-status">Hold Ctrl active</div>
+
+    <!-- Portrait: cross at bottom, Execute button above -->
+    <div class="dpad-body">
+      <button class="dpad-execute-btn" id="dpad-execute-btn">EXECUTE</button>
+
+      <div class="dpad-cross" id="dpad-cross">
+        <button class="dpad-btn dpad-btn--up"    data-dir="up">▲</button>
+        <button class="dpad-btn dpad-btn--left"  data-dir="left">◀</button>
+        <button class="dpad-btn dpad-btn--center" aria-hidden="true"></button>
+        <button class="dpad-btn dpad-btn--right" data-dir="right">▶</button>
+        <button class="dpad-btn dpad-btn--down"  data-dir="down">▼</button>
+      </div>
+    </div>
+
+  </div>
+
   <!-- Settings overlay -->
   <div class="settings-overlay hidden" id="settings-overlay">
     <div class="settings-panel" role="dialog" aria-label="Settings">
@@ -78,6 +104,23 @@
           Key delay: <span class="range-value" id="delay-value">50</span> ms
         </label>
         <input type="range" id="setting-delay" min="10" max="300" step="10" value="50">
+      </div>
+
+      <div class="settings-row">
+        <label>
+          Cooldown reduction: <span class="range-value" id="cd-modifier-value">0</span>%
+        </label>
+        <div class="settings-range-row">
+          <input type="range" id="setting-cd-modifier" min="0" max="50" step="5" value="0">
+          <input type="number" id="setting-cd-modifier-num" class="range-num-input" min="0" max="50" step="5" value="0">
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-check-label">
+          <input type="checkbox" id="setting-show-cooldowns" checked>
+          Show cooldowns on cards
+        </label>
       </div>
 
       <div class="settings-row">
