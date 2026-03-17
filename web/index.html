@@ -71,7 +71,6 @@
     <div class="loadout-dpad-area" id="loadout-dpad-area">
       <div class="ldpad-topbar">
         <div class="ldpad-sequence" id="ldpad-sequence"></div>
-        <button class="ldpad-cancel-btn" id="ldpad-cancel-btn" aria-label="Cancel sequence">✕ Cancel</button>
       </div>
       <!-- Countdown bar: depletes over auto-release timeout -->
       <div class="ldpad-countdown-bar">
@@ -94,6 +93,8 @@
           <button class="dpad-btn dpad-btn--down"   data-dir="down">▼</button>
         </div>
       </div>
+      <!-- Cancel is a direct child so it can be independently positioned in landscape -->
+      <button class="ldpad-cancel-btn" id="ldpad-cancel-btn" aria-label="Cancel sequence">✕ Cancel</button>
     </div>
 
   </div>

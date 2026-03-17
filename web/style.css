@@ -282,10 +282,9 @@ body {
   font-size: 1.1rem;
 }
 
-/* Swipe-zone visual when manual mode is active (swipe zone is the D-pad area) */
+/* Swipe-zone visual when manual mode is active — inset so it never overflows viewport */
 .loadout-dpad-area.manual-active {
-  outline: 2px dashed var(--accent-yellow);
-  outline-offset: 2px;
+  box-shadow: inset 0 0 0 2px var(--accent-yellow);
   border-radius: var(--border-radius);
 }
 
@@ -933,7 +932,7 @@ body {
     align-items: stretch;
   }
 
-  /* ---- Cards panel: 40 vw, 2×2 grid filling full height ---- */
+  /* Cards panel: 40 vw, 2×2 grid filling full height */
   .body--loadout-view .grid-wrap {
     flex-shrink: 0;
     width: 40vw;
@@ -956,7 +955,9 @@ body {
     height: 100%;
   }
 
-  /* ---- D-pad panel: 60 vw, flex column, items centred ---- */
+  /* D-pad panel: 60 vw, flex column, items centred horizontally.
+     DOM order is already correct (topbar → countdown → timer → status → cross-wrap → cancel)
+     so no CSS order overrides needed. */
   .body--loadout-view .loadout-dpad-area {
     flex: 1;
     min-width: 0;
@@ -966,29 +967,20 @@ body {
     gap: 2px;
   }
 
-  /*
-   * Break ldpad-topbar so its children (sequence + cancel) become
-   * direct flex items of loadout-dpad-area and can be independently
-   * reordered. display:contents removes the topbar box without touching HTML.
-   */
-  .body--loadout-view .ldpad-topbar { display: contents; }
-
-  /* 1 — Sequence display: top, centred */
-  .body--loadout-view .ldpad-sequence {
-    order: 1;
+  /* Topbar (sequence only): compact */
+  .body--loadout-view .ldpad-topbar {
     min-height: 22px;
     padding: 0 4px;
+    width: 100%;
+  }
+  .body--loadout-view .ldpad-sequence {
     font-size: 0.85rem;
+    min-height: unset;
     justify-content: center;
   }
-  /* 2 — Countdown bar */
-  .body--loadout-view .ldpad-countdown-bar {
-    order: 2;
-    width: 80%;
-  }
-  /* 3 — Auto-release slider: compact row */
+
+  /* Timer row: compact, full width for slider */
   .body--loadout-view .ldpad-timer-row {
-    order: 3;
     width: 100%;
     padding: 0 4px;
     gap: 4px;
@@ -996,32 +988,33 @@ body {
   .body--loadout-view .ldpad-timer-label,
   .body--loadout-view .ldpad-timer-value { font-size: 0.65rem; }
 
-  /* 4 — Status text: hidden, not enough vertical space */
+  /* Status text: hidden in landscape to save vertical space */
   .body--loadout-view .ldpad-status { display: none; }
 
-  /* 5 — D-pad cross: takes remaining height, centred */
+  /* Cross wrap: fills remaining height, cross is centred inside */
   .body--loadout-view .ldpad-cross-wrap {
-    order: 5;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
 
-  /* 10 — Cancel button: bottom, small */
+  /* Cancel: small, sits below the cross (natural DOM position) */
   .body--loadout-view .ldpad-cancel-btn {
-    order: 10;
     align-self: center;
     font-size: 0.7rem;
     padding: 3px 12px;
     margin-top: 2px;
+    flex-shrink: 0;
   }
 
   /*
-   * Cross cell size: fit width in 60 vw, fit height in available viewport.
-   * Available height ≈ 100vh − header(~50px) − loadout-bar(~36px) − tabs(~44px) − overhead(~80px)
-   * → use min(vw-based, vh-based) so neither axis overflows.
+   * Cell size: guaranteed to fit in the available height.
+   * Available height ≈ 100dvh − fixed chrome (~130px) − dpad overhead (~110px) = ~240px gone.
+   * So each of the 3 rows = (100dvh − 240px) / 3.
+   * Width cap: cross must stay within 60 vw → each cell ≤ 50vw / 3.
    */
   .ldpad-cross-wrap .dpad-cross {
-    --cell: clamp(52px, min(16vw, 16vh), 95px);
+    --cell: clamp(52px, min(calc(50vw / 3), calc((100dvh - 240px) / 3)), 86px);
     grid-template-columns: repeat(3, var(--cell));
     grid-template-rows:    repeat(3, var(--cell));
   }
