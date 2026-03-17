@@ -544,7 +544,13 @@ class ServerManagerApp:
         self._stop(callback=_after_stop)
 
     def _on_close(self) -> None:
-        self._stop(callback=self.root.destroy)
+        alive = self._server_thread is not None and self._server_thread.is_alive()
+        print("[EXIT] _on_close called, server alive:", alive)
+        if alive:
+            self._log("Shutting down server...")
+            self._stop(callback=self.root.destroy)
+        else:
+            self.root.destroy()
 
     # ── log ────────────────────────────────────────────────────────────────
 
