@@ -69,10 +69,11 @@ except ImportError:  # pragma: no cover
 
 # ---------------------------------------------------------------- constants
 
-WINDOW_TITLE = "Stratagem Launcher — Server Manager"
-WINDOW_MIN_W = 800
-WINDOW_MIN_H = 500
-WINDOW_INIT  = "1160x840"
+WINDOW_TITLE    = "Stratagem Launcher — Server Manager"
+WINDOW_MIN_W    = 1000
+WINDOW_MIN_H    = 740
+WINDOW_INIT     = "1160x840"
+QR_CANVAS_SIZE  = 260
 
 COLOR_RUN   = "#4caf50"
 COLOR_STOP  = "#f44336"
@@ -173,7 +174,7 @@ class ServerManagerApp:
 
         self._server_thread: ServerThread | None = None
         self._log_queue: queue.Queue = queue.Queue()
-        # qr_canvas and qr_url_label are set in _build_ui()
+        # _qr_canvas and _qr_url_label are set in _build_ui()
 
         # Shared mutable config — slider updates it live while server runs
         self._cfg = Config()
@@ -217,7 +218,8 @@ class ServerManagerApp:
         )
         paned.pack(fill="both", expand=True, padx=8, pady=(6, 8))
 
-        left = tk.Frame(paned, bg=COLOR_BG)
+        left = tk.Frame(paned, bg=COLOR_BG, width=420)
+        left.pack_propagate(False)
         paned.add(left, minsize=400, stretch="never")
 
         right = tk.Frame(paned, bg=COLOR_BG)
@@ -307,23 +309,31 @@ class ServerManagerApp:
         self._port_var.trace_add("write", lambda *_: self.root.after(200, self._refresh_qr))
 
         # QR area — fills remaining space between Connection (top) and Settings (bottom)
-        qr_frame = tk.Frame(left, bg=COLOR_PANEL, bd=1, relief="solid")
-        qr_frame.pack(fill="both", expand=True, padx=4, pady=8)
+        qr_outer = tk.Frame(left, bg=COLOR_PANEL, bd=1, relief="solid")
+        qr_outer.pack(fill="both", expand=True, padx=4, pady=8)
 
         tk.Label(
-            qr_frame, text="Open on phone:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+            qr_outer, text="Open on phone:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
         ).pack(pady=(8, 2))
 
-        self.qr_canvas = tk.Canvas(
-            qr_frame, width=200, height=200, bg="#FFFFFF", highlightthickness=0,
-        )
-        self.qr_canvas.pack(fill="both", expand=True, padx=10, pady=5)
-        self.qr_canvas.bind("<Configure>", lambda e: self._refresh_qr())
+        # Fixed-height inner frame prevents QR from being squished on window resize
+        qr_frame = tk.Frame(qr_outer, bg=COLOR_PANEL, height=QR_CANVAS_SIZE + 8)
+        qr_frame.pack_propagate(False)
+        qr_frame.pack(pady=(0, 4))
 
-        self.qr_url_label = tk.Label(
-            qr_frame, text="", bg=COLOR_PANEL, fg=COLOR_YEL, font=F_SM,
+        self._qr_canvas = tk.Canvas(
+            qr_frame,
+            width=QR_CANVAS_SIZE,
+            height=QR_CANVAS_SIZE,
+            bg="white",
+            highlightthickness=0,
         )
-        self.qr_url_label.pack(pady=(0, 8))
+        self._qr_canvas.pack()
+
+        self._qr_url_label = tk.Label(
+            qr_outer, text="", bg=COLOR_PANEL, fg=COLOR_YEL, font=F_SM,
+        )
+        self._qr_url_label.pack(pady=(0, 8))
 
         # ── Log viewer — fills entire right pane ───────────────────────────
         log_frame = self._make_panel(right, " Log ")
@@ -406,13 +416,12 @@ class ServerManagerApp:
         self._refresh_qr()
 
     def _refresh_qr(self) -> None:
-        """Draw QR code directly on tkinter Canvas — no PIL needed."""
-        print(f"DEBUG QR: canvas size={self.qr_canvas.winfo_width()}x{self.qr_canvas.winfo_height()}")
+        """Update URL labels and redraw QR for the current mode/port/IP."""
         port = self._get_port()
         mode = self._mode_var.get()
         lan  = get_lan_ip()
 
-        # Always update connection URL label vars
+        # Update connection URL StringVars
         if mode == "wifi" and lan:
             wifi_url = f"http://{lan}:{port}"
             self._wifi_url_var.set(wifi_url)
@@ -420,65 +429,62 @@ class ServerManagerApp:
             wifi_url = ""
             self._wifi_url_var.set("—")
 
-        # Local URL — use 127.0.0.1 explicitly (Windows 11: localhost → ::1 IPv6)
+        # Local URL — always 127.0.0.1 (Windows 11: localhost → ::1 IPv6)
         self._local_url_var.set(f"http://127.0.0.1:{port}")
 
-        # Non-WiFi modes: no QR needed
+        # Non-WiFi modes: clear canvas, show local URL
         if mode in ("local", "usb"):
-            self.qr_canvas.delete("all")
-            self.qr_url_label.configure(text=f"http://127.0.0.1:{port}")
+            self._qr_canvas.delete("all")
+            self._qr_url_label.configure(text=f"http://127.0.0.1:{port}")
             return
 
         if not wifi_url:
-            self.qr_canvas.delete("all")
-            self.qr_url_label.configure(text="(No LAN IP — check network)")
+            self._qr_canvas.delete("all")
+            self._qr_url_label.configure(text="(No LAN IP — check network)")
             return
 
-        # WiFi mode — generate and draw QR matrix on Canvas
-        self.qr_url_label.configure(text=wifi_url)
+        self._qr_url_label.configure(text=wifi_url)
+        self.root.update_idletasks()   # ensure canvas is laid out before drawing
+        self._draw_qr(wifi_url)
 
+    def _draw_qr(self, url: str) -> None:
+        """Render QR matrix on canvas using a fixed pixel size (no winfo_width needed)."""
+        self._qr_canvas.delete("all")
         try:
             import qrcode  # type: ignore[import]
-        except ImportError:
-            self.qr_canvas.delete("all")
-            return
+            qr = qrcode.QRCode(
+                version=None,
+                error_correction=qrcode.constants.ERROR_CORRECT_M,
+                box_size=1,   # matrix generation only — actual size set via QR_CANVAS_SIZE
+                border=2,
+            )
+            qr.add_data(url)
+            qr.make(fit=True)
+            matrix = qr.modules   # list[list[bool]] — True = dark module
 
-        qr = qrcode.QRCode(
-            version=None,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=1,
-            border=2,
-        )
-        qr.add_data(wifi_url)
-        qr.make(fit=True)
-        matrix = qr.get_matrix()   # list[list[bool]] — True = dark module
+            side = len(matrix)
+            box  = QR_CANVAS_SIZE // (side + 4)   # +4 accounts for border*2
+            if box < 1:
+                box = 1
+            offset = (QR_CANVAS_SIZE - box * side) // 2
 
-        rows = len(matrix)
-        cols = len(matrix[0]) if rows else 0
-
-        canvas_size = min(self.qr_canvas.winfo_width(), self.qr_canvas.winfo_height())
-        if canvas_size < 10:
-            canvas_size = 200   # fallback before first Tk layout pass
-
-        box = max(1, canvas_size // max(rows, cols, 1))
-        print(f"DEBUG QR: matrix {rows}x{cols}, box={box}")
-        total_w = cols * box
-        total_h = rows * box
-        ox = (canvas_size - total_w) // 2
-        oy = (canvas_size - total_h) // 2
-
-        self.qr_canvas.delete("all")
-        self.qr_canvas.create_rectangle(0, 0, canvas_size, canvas_size,
-                                         fill="#FFFFFF", outline="")
-        for r, row in enumerate(matrix):
-            for c, cell in enumerate(row):
-                if cell:
-                    x1 = ox + c * box
-                    y1 = oy + r * box
-                    self.qr_canvas.create_rectangle(
-                        x1, y1, x1 + box, y1 + box,
-                        fill="#000000", outline="",
-                    )
+            for row_idx, row in enumerate(matrix):
+                for col_idx, cell in enumerate(row):
+                    if cell:
+                        x0 = offset + col_idx * box
+                        y0 = offset + row_idx * box
+                        self._qr_canvas.create_rectangle(
+                            x0, y0, x0 + box, y0 + box,
+                            fill="black", outline="",
+                        )
+        except Exception as e:
+            self._qr_canvas.create_text(
+                QR_CANVAS_SIZE // 2,
+                QR_CANVAS_SIZE // 2,
+                text=f"QR error:\n{e}",
+                fill="red",
+                justify="center",
+            )
 
     def _on_delay_change(self, val: str) -> None:
         ms = int(val)
