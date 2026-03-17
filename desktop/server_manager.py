@@ -518,12 +518,16 @@ class ServerManagerApp:
         self._server_thread = ServerThread(self._cfg)
         self._server_thread.start()
         self._set_running(True)
+        host = self._cfg.host
+        port = self._cfg.port
+        self._log(f"Server started on http://{host}:{port}")
 
     def _stop(self, callback=None) -> None:
         """Shut down the server in a background thread to avoid blocking tkinter."""
         thread = self._server_thread
         self._server_thread = None
         self._set_running(False)   # update UI immediately
+        self._log("Server stopped")
 
         def _do() -> None:
             if thread is not None:
@@ -543,6 +547,10 @@ class ServerManagerApp:
         self._stop(callback=self.root.destroy)
 
     # ── log ────────────────────────────────────────────────────────────────
+
+    def _log(self, msg: str) -> None:
+        """Emit a message directly to the log panel (GUI thread only)."""
+        logging.getLogger(__name__).info(msg)
 
     def _attach_log_handler(self) -> None:
         handler = TkLogHandler(self._log_queue)
