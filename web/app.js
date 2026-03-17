@@ -652,6 +652,7 @@ function initDpad() {
   if (openBtn) openBtn.addEventListener('click', openDpad);
   document.getElementById('dpad-close-btn').addEventListener('click', closeDpad);
   document.getElementById('dpad-execute-btn').addEventListener('click', dpadExecute);
+  document.getElementById('ldpad-cancel-btn').addEventListener('click', cancelInlineDpad);
 
   document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
     btn.addEventListener('click', () => dpadTap(btn.dataset.dir));
@@ -686,15 +687,26 @@ async function dpadExecute() {
 }
 
 async function dpadTap(direction) {
-  if (!dpadActive) return;
+  // Auto-start: first tap holds Ctrl automatically (no explicit Start button)
+  if (!dpadActive) {
+    try {
+      await apiFetch('/api/manual/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      dpadActive = true;
+      dpadSequence = [];
+      setDpadStatus(true);
+    } catch {
+      showToast('Cannot start manual mode — check connection', 'error');
+      return;
+    }
+  }
+
   if (navigator.vibrate) navigator.vibrate(30);
 
-  // Flash the button
-  const btn = document.querySelector(`.dpad-btn[data-dir="${direction}"]`);
-  if (btn) {
+  // Flash all matching buttons (overlay + embedded)
+  document.querySelectorAll(`.dpad-btn[data-dir="${direction}"]`).forEach(btn => {
     btn.classList.add('dpad-btn--flash');
     setTimeout(() => btn.classList.remove('dpad-btn--flash'), 150);
-  }
+  });
 
   try {
     await apiFetch('/api/manual/key', {
@@ -717,25 +729,36 @@ async function dpadTap(direction) {
 }
 
 function renderDpadSequence() {
-  const el = document.getElementById('dpad-sequence');
-  el.innerHTML = '';
-  for (const dir of dpadSequence) {
-    const span = document.createElement('span');
-    span.className = 'dpad-seq-arrow';
-    span.textContent = ARROW[dir] || dir;
-    el.appendChild(span);
+  for (const id of ['dpad-sequence', 'ldpad-sequence']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.innerHTML = '';
+    for (const dir of dpadSequence) {
+      const span = document.createElement('span');
+      span.className = 'dpad-seq-arrow';
+      span.textContent = ARROW[dir] || dir;
+      el.appendChild(span);
+    }
   }
 }
 
 function setDpadStatus(active) {
-  const el = document.getElementById('dpad-status');
-  if (active) {
-    el.textContent = 'Ctrl held — tap arrows, then EXECUTE';
-    el.classList.remove('dpad-status--inactive');
-  } else {
-    el.textContent = 'Ctrl released';
-    el.classList.add('dpad-status--inactive');
+  const text    = active ? 'Ctrl held — tap arrows to enter sequence' : 'Ctrl released';
+  const inactiveClass = 'dpad-status--inactive';
+  for (const id of ['dpad-status', 'ldpad-status']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.textContent = text;
+    el.classList.toggle(inactiveClass, !active);
   }
+}
+
+async function cancelInlineDpad() {
+  await apiFetch('/api/manual/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  dpadActive = false;
+  dpadSequence = [];
+  renderDpadSequence();
+  setDpadStatus(false);
 }
 
 // ------------------------------------------------------------------ boot

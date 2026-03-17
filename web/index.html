@@ -46,23 +46,46 @@
     <button class="tab tab--active" data-cat="all" style="--tab-color:#f5c518" role="tab">All</button>
   </nav>
 
-  <div class="search-wrap">
-    <input
-      class="search-input"
-      id="search"
-      type="search"
-      placeholder="Search stratagems…"
-      autocomplete="off"
-      autocorrect="off"
-      spellcheck="false"
-    >
-  </div>
+  <!-- Game area: search + card grid + embedded D-pad (loadout view) -->
+  <div id="game-area">
 
-  <main class="grid-wrap">
-    <div class="grid" id="grid" role="list">
-      <div class="empty" id="loading">Loading…</div>
+    <div class="search-wrap">
+      <input
+        class="search-input"
+        id="search"
+        type="search"
+        placeholder="Search stratagems…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
     </div>
-  </main>
+
+    <main class="grid-wrap">
+      <div class="grid" id="grid" role="list">
+        <div class="empty" id="loading">Loading…</div>
+      </div>
+    </main>
+
+    <!-- Embedded D-pad: visible only in loadout view -->
+    <div class="loadout-dpad-area" id="loadout-dpad-area">
+      <div class="ldpad-topbar">
+        <div class="ldpad-sequence" id="ldpad-sequence"></div>
+        <button class="ldpad-cancel-btn" id="ldpad-cancel-btn" aria-label="Cancel sequence">✕ Cancel</button>
+      </div>
+      <div class="ldpad-status dpad-status--inactive" id="ldpad-status">Tap an arrow to enter sequence</div>
+      <div class="ldpad-cross-wrap">
+        <div class="dpad-cross">
+          <button class="dpad-btn dpad-btn--up"     data-dir="up">▲</button>
+          <button class="dpad-btn dpad-btn--left"   data-dir="left">◀</button>
+          <button class="dpad-btn dpad-btn--center" aria-hidden="true"></button>
+          <button class="dpad-btn dpad-btn--right"  data-dir="right">▶</button>
+          <button class="dpad-btn dpad-btn--down"   data-dir="down">▼</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <div class="toast-container" id="toasts"></div>
 

@@ -301,9 +301,111 @@ body {
   .grid--loadout .card__cooldown   { font-size: 1.4rem; }
 }
 
-/* Loadout view body state: hide search, tighten grid padding */
+/* Loadout view body state: viewport-filling flex column */
+.body--loadout-view {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.body--loadout-view .header,
+.body--loadout-view .loadout-bar,
+.body--loadout-view .tabs,
+.body--loadout-view .edit-header { flex-shrink: 0; }
+
+.body--loadout-view #game-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .body--loadout-view .search-wrap { display: none; }
-.body--loadout-view .grid-wrap   { padding: 6px; }
+.body--loadout-view .grid-wrap   { flex-shrink: 0; padding: 6px; }
+
+/* ------------------------------------------ embedded D-pad (loadout view) */
+
+.loadout-dpad-area {
+  display: none;           /* hidden outside loadout view */
+}
+
+.body--loadout-view .loadout-dpad-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 8px;
+}
+
+.ldpad-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  min-height: 40px;
+}
+
+.ldpad-sequence {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 1.2rem;
+  color: var(--accent-yellow);
+  min-height: 26px;
+}
+
+.ldpad-cancel-btn {
+  background: none;
+  border: 1px solid #444;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition), border-color var(--transition);
+}
+.ldpad-cancel-btn:hover { color: var(--error); border-color: var(--error); }
+
+.ldpad-status {
+  width: 100%;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--accent-yellow);
+  padding: 4px 12px;
+  background: #1c1600;
+  border: 1px solid #3a3200;
+  border-radius: var(--border-radius-sm);
+}
+.ldpad-status.dpad-status--inactive {
+  color: var(--text-dim);
+  background: transparent;
+  border-color: transparent;
+}
+
+.ldpad-cross-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Embedded cross: scale cells to fill available space */
+.ldpad-cross-wrap .dpad-cross {
+  --cell: clamp(72px, 26vw, 110px);
+  grid-template-columns: repeat(3, var(--cell));
+  grid-template-rows:    repeat(3, var(--cell));
+}
+.ldpad-cross-wrap .dpad-btn { font-size: clamp(1.4rem, 5vw, 2rem); }
 
 /* ------------------------------------------------------------------- tabs */
 
