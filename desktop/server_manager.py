@@ -9,6 +9,7 @@ Or build a standalone .exe:
 
 from __future__ import annotations
 
+import ctypes
 import logging
 import os
 import queue
@@ -498,6 +499,16 @@ class ServerManagerApp:
 # ---------------------------------------------------------------- entry point
 
 def main() -> None:
+    # Windows DPI awareness — must be called BEFORE Tk() initialization
+    if sys.platform == "win32":
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)   # Per-Monitor V2 (Win 10 1703+)
+        except (AttributeError, OSError):
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()    # System DPI (fallback)
+            except (AttributeError, OSError):
+                pass
+
     root = tk.Tk()
     root.geometry(WINDOW_INIT)
     ServerManagerApp(root)
