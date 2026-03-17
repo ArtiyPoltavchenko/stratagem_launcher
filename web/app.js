@@ -561,6 +561,8 @@ function initSettings() {
     delayInput.value = s.keyDelayMs;
     delayValue.textContent = s.keyDelayMs;
   }
+  const autoClickEl = document.getElementById('setting-auto-click');
+  if (autoClickEl) autoClickEl.checked = s.autoClick ?? false;
 
   const savedMod = getCooldownModifier();
   cdModSlider.value = savedMod;
@@ -599,19 +601,22 @@ function initSettings() {
   applyBtn.addEventListener('click', async () => {
     const ip = ipInput.value.trim();
     const delay = parseInt(delayInput.value, 10);
-    saveSettings({ serverIp: ip || null, keyDelayMs: delay });
+    const autoClick = document.getElementById('setting-auto-click')?.checked ?? false;
+    saveSettings({ serverIp: ip || null, keyDelayMs: delay, autoClick });
 
-    // Push delay to server
+    // Push settings to server; show feedback based on success/failure
     try {
       await apiFetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key_delay_ms: delay }),
+        body: JSON.stringify({ key_delay_ms: delay, auto_click: autoClick }),
       });
-    } catch { /* ignore — server might be unreachable */ }
-
-    overlay.classList.add('hidden');
-    showToast('Settings saved');
+      overlay.classList.add('hidden');
+      showToast('Settings saved ✓');
+    } catch {
+      showToast('Settings saved locally (server unreachable)', 'busy');
+      overlay.classList.add('hidden');
+    }
   });
 
   testBtn.addEventListener('click', async () => {
