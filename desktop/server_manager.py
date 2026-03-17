@@ -73,7 +73,7 @@ WINDOW_TITLE    = "Stratagem Launcher — Server Manager"
 WINDOW_MIN_W    = 1000
 WINDOW_MIN_H    = 740
 WINDOW_INIT     = "1160x840"
-QR_CANVAS_SIZE  = 260
+QR_IMG_SIZE  = 260
 
 COLOR_RUN   = "#4caf50"
 COLOR_STOP  = "#f44336"
@@ -174,7 +174,7 @@ class ServerManagerApp:
 
         self._server_thread: ServerThread | None = None
         self._log_queue: queue.Queue = queue.Queue()
-        # _qr_canvas and _qr_url_label are set in _build_ui()
+        # _qr_label, _qr_photo, _qr_url_label are set in _build_ui()
 
         # Shared mutable config — slider updates it live while server runs
         self._cfg = Config()
@@ -308,32 +308,23 @@ class ServerManagerApp:
         ).pack(side="left")
         self._port_var.trace_add("write", lambda *_: self.root.after(200, self._refresh_qr))
 
-        # QR area — fills remaining space between Connection (top) and Settings (bottom)
-        qr_outer = tk.Frame(left, bg=COLOR_PANEL, bd=1, relief="solid")
-        qr_outer.pack(fill="both", expand=True, padx=4, pady=8)
-
+        # QR area — sits between Connection (top) and Settings (bottom)
         tk.Label(
-            qr_outer, text="Open on phone:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+            left, text="Open on phone:", bg=COLOR_BG, fg=COLOR_DIM, font=F_SM,
         ).pack(pady=(8, 2))
 
-        # Fixed-height inner frame prevents QR from being squished on window resize
-        qr_frame = tk.Frame(qr_outer, bg=COLOR_PANEL, height=QR_CANVAS_SIZE + 8)
-        qr_frame.pack_propagate(False)
-        qr_frame.pack(pady=(0, 4))
+        # White-bg frame provides quiet zone around the QR image
+        qr_frame = tk.Frame(left, bg="white", padx=4, pady=4)
+        qr_frame.pack(padx=8, pady=(0, 4))
 
-        self._qr_canvas = tk.Canvas(
-            qr_frame,
-            width=QR_CANVAS_SIZE,
-            height=QR_CANVAS_SIZE,
-            bg="white",
-            highlightthickness=0,
-        )
-        self._qr_canvas.pack()
+        self._qr_label = tk.Label(qr_frame, bg="white", bd=0)
+        self._qr_label.pack()
+        self._qr_photo = None   # keep reference so GC won't collect it
 
         self._qr_url_label = tk.Label(
-            qr_outer, text="", bg=COLOR_PANEL, fg=COLOR_YEL, font=F_SM,
+            left, text="", bg=COLOR_BG, fg=COLOR_YEL, font=F_SM,
         )
-        self._qr_url_label.pack(pady=(0, 8))
+        self._qr_url_label.pack(pady=(0, 4))
 
         # ── Log viewer — fills entire right pane ───────────────────────────
         log_frame = self._make_panel(right, " Log ")
@@ -432,58 +423,67 @@ class ServerManagerApp:
         # Local URL — always 127.0.0.1 (Windows 11: localhost → ::1 IPv6)
         self._local_url_var.set(f"http://127.0.0.1:{port}")
 
-        # Non-WiFi modes: clear canvas, show local URL
+        # Non-WiFi modes: clear QR image, show local URL
         if mode in ("local", "usb"):
-            self._qr_canvas.delete("all")
+            self._qr_label.config(image="", text="")
+            self._qr_photo = None
             self._qr_url_label.configure(text=f"http://127.0.0.1:{port}")
             return
 
         if not wifi_url:
-            self._qr_canvas.delete("all")
+            self._qr_label.config(image="", text="")
+            self._qr_photo = None
             self._qr_url_label.configure(text="(No LAN IP — check network)")
             return
 
         self._qr_url_label.configure(text=wifi_url)
-        self.root.update_idletasks()   # ensure canvas is laid out before drawing
         self._draw_qr(wifi_url)
 
     def _draw_qr(self, url: str) -> None:
-        """Render QR matrix on canvas using a fixed pixel size (no winfo_width needed)."""
-        self._qr_canvas.delete("all")
+        """Render QR code via tk.PhotoImage.put() — no Canvas, no PIL needed."""
         try:
             import qrcode  # type: ignore[import]
+
             qr = qrcode.QRCode(
                 version=None,
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
-                box_size=1,   # matrix generation only — actual size set via QR_CANVAS_SIZE
+                box_size=1,
                 border=2,
             )
             qr.add_data(url)
             qr.make(fit=True)
-            matrix = qr.modules   # list[list[bool]] — True = dark module
+            matrix = qr.modules          # list[list[bool]]
+            n = len(matrix)              # number of modules
 
-            side = len(matrix)
-            box  = QR_CANVAS_SIZE // (side + 4)   # +4 accounts for border*2
-            if box < 1:
-                box = 1
-            offset = (QR_CANVAS_SIZE - box * side) // 2
+            # Pixels per module — scale to QR_IMG_SIZE
+            scale = QR_IMG_SIZE // n
+            if scale < 1:
+                scale = 1
+            img_side = n * scale         # actual image size in pixels
 
-            for row_idx, row in enumerate(matrix):
-                for col_idx, cell in enumerate(row):
-                    if cell:
-                        x0 = offset + col_idx * box
-                        y0 = offset + row_idx * box
-                        self._qr_canvas.create_rectangle(
-                            x0, y0, x0 + box, y0 + box,
-                            fill="black", outline="",
-                        )
+            # Build the PhotoImage row-by-row via put()
+            img = tk.PhotoImage(width=img_side, height=img_side)
+            rows_data = []
+            for row in matrix:
+                row_pixels = " ".join(
+                    "#000000" if cell else "#ffffff"
+                    for cell in row
+                    for _ in range(scale)   # repeat pixel `scale` times horizontally
+                )
+                for _ in range(scale):      # repeat row `scale` times vertically
+                    rows_data.append("{" + row_pixels + "}")
+            img.put(" ".join(rows_data))
+
+            self._qr_photo = img            # keep reference — GC must not collect this
+            self._qr_label.config(image=img, text="")
+
         except Exception as e:
-            self._qr_canvas.create_text(
-                QR_CANVAS_SIZE // 2,
-                QR_CANVAS_SIZE // 2,
-                text=f"QR error:\n{e}",
-                fill="red",
-                justify="center",
+            self._qr_photo = None
+            self._qr_label.config(
+                image="",
+                text=f"QR unavailable:\n{e}",
+                fg="red",
+                font=("Consolas", 9),
             )
 
     def _on_delay_change(self, val: str) -> None:
