@@ -924,7 +924,7 @@ body {
   }
 }
 
-/* Loadout view — landscape: cards left (40 vw) + D-pad right (60 vw) */
+/* Loadout view — landscape: cards left (45 vw) + D-pad right (55 vw) */
 @media (orientation: landscape) {
   /* Two-column layout */
   .body--loadout-view #game-area {
@@ -932,10 +932,12 @@ body {
     align-items: stretch;
   }
 
-  /* Cards panel: 40 vw, 2×2 grid filling full height */
+  /* Cards panel: 45 vw, 2×2 grid.
+     min-width: 0 is required — without it flex won't shrink this child. */
   .body--loadout-view .grid-wrap {
     flex-shrink: 0;
-    width: 40vw;
+    width: 45vw;
+    min-width: 0;
     padding: 4px;
     display: flex;
     flex-direction: column;
@@ -949,18 +951,29 @@ body {
     height: 100%;
     gap: 4px;
   }
+  /* Remove height:100% — grid-auto-rows:1fr handles distribution.
+     min-height:0 + overflow:hidden let cells shrink on short screens. */
   .body--loadout-view .grid--loadout .card {
     aspect-ratio: unset;
-    min-height: unset;
-    height: 100%;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+  }
+  /* Scale icon and name to card width (≈ 45vw / 2 per cell) */
+  .body--loadout-view .grid--loadout .card__icon {
+    width:  clamp(28px, calc(45vw / 5), 48px);
+    height: clamp(28px, calc(45vw / 5), 48px);
+  }
+  .body--loadout-view .grid--loadout .card__name {
+    font-size: clamp(0.5rem, calc(45vw / 20), 0.72rem);
   }
 
-  /* D-pad panel: 60 vw, flex column, items centred horizontally.
-     DOM order is already correct (topbar → countdown → timer → status → cross-wrap → cancel)
-     so no CSS order overrides needed. */
+  /* D-pad panel: fills remaining width.
+     overflow:hidden prevents children from pushing this container wider. */
   .body--loadout-view .loadout-dpad-area {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
     flex-direction: column;
     align-items: center;
     padding: 4px 8px 6px;
@@ -979,11 +992,12 @@ body {
     justify-content: center;
   }
 
-  /* Timer row: compact, full width for slider */
+  /* Timer row: compact, shrinkable so it doesn't push cross off screen */
   .body--loadout-view .ldpad-timer-row {
     width: 100%;
     padding: 0 4px;
     gap: 4px;
+    flex-shrink: 1;
   }
   .body--loadout-view .ldpad-timer-label,
   .body--loadout-view .ldpad-timer-value { font-size: 0.65rem; }
@@ -991,7 +1005,7 @@ body {
   /* Status text: hidden in landscape to save vertical space */
   .body--loadout-view .ldpad-status { display: none; }
 
-  /* Cross wrap: fills remaining height, cross is centred inside */
+  /* Cross wrap: fills remaining height, cross centred inside */
   .body--loadout-view .ldpad-cross-wrap {
     flex: 1;
     min-height: 0;
@@ -1008,13 +1022,15 @@ body {
   }
 
   /*
-   * Cell size: guaranteed to fit in the available height.
-   * Available height ≈ 100dvh − fixed chrome (~130px) − dpad overhead (~110px) = ~240px gone.
-   * So each of the 3 rows = (100dvh − 240px) / 3.
-   * Width cap: cross must stay within 60 vw → each cell ≤ 50vw / 3.
+   * Cell size for S23 Ultra landscape (≈ 915×412 dp):
+   * Available height = 412 − header(48) − topbar(32) − slider(48) − cancel(36) ≈ 248px
+   * Height cap: (100dvh − 164px) / 3
+   * Width cap:  cross lives in ~55vw → 52vw / 3.2 per cell
    */
   .ldpad-cross-wrap .dpad-cross {
-    --cell: clamp(52px, min(calc(50vw / 3), calc((100dvh - 240px) / 3)), 86px);
+    --cell: clamp(48px,
+      min(calc(52vw / 3.2), calc((100dvh - 164px) / 3)),
+      82px);
     grid-template-columns: repeat(3, var(--cell));
     grid-template-rows:    repeat(3, var(--cell));
   }
