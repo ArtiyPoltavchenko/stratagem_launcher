@@ -89,6 +89,8 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
                 keys=s["keys"],
                 key_delay=sl_cfg.key_delay,
                 ctrl_delay=sl_cfg.ctrl_hold_delay,
+                key_hold=sl_cfg.key_hold,
+                auto_click=sl_cfg.auto_click,
             )
         except BlockingIOError:
             return jsonify({"status": "busy", "message": "Another stratagem is being executed"}), 503
@@ -122,6 +124,7 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
 
     @app.route("/api/manual/key", methods=["POST"])
     def manual_key():
+        sl_cfg: Config = app.config["SL_CONFIG"]
         body = request.get_json(silent=True) or {}
         direction = body.get("direction", "").strip()
 
@@ -129,7 +132,7 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
             return jsonify({"status": "error", "message": "Missing field: direction"}), 400
 
         try:
-            ok = keypress.manual_key(direction)
+            ok = keypress.manual_key(direction, key_hold=sl_cfg.key_hold)
         except ValueError as e:
             return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -155,6 +158,8 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
         return jsonify({
             "key_delay_ms": sl_cfg.key_delay_ms,
             "ctrl_hold_delay_ms": sl_cfg.ctrl_hold_delay_ms,
+            "key_hold_ms": sl_cfg.key_hold_ms,
+            "auto_click": sl_cfg.auto_click,
             "version": "1.0.0",
         })
 
@@ -183,6 +188,7 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
     def update_settings():
         sl_cfg: Config = app.config["SL_CONFIG"]
         body = request.get_json(silent=True) or {}
+        log.info("[SETTINGS] Received: %s", body)
 
         if "key_delay_ms" in body:
             val = int(body["key_delay_ms"])
@@ -196,10 +202,25 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
                 return jsonify({"status": "error", "message": "ctrl_hold_delay_ms must be 10–500"}), 400
             sl_cfg.ctrl_hold_delay_ms = val
 
+        if "key_hold_ms" in body:
+            val = int(body["key_hold_ms"])
+            if not 0 <= val <= 500:
+                return jsonify({"status": "error", "message": "key_hold_ms must be 0–500"}), 400
+            sl_cfg.key_hold_ms = val
+
+        if "auto_click" in body:
+            sl_cfg.auto_click = bool(body["auto_click"])
+
+        log.info(
+            "[SETTINGS] Applied: key_delay_ms=%d ctrl_hold_delay_ms=%d key_hold_ms=%d auto_click=%s",
+            sl_cfg.key_delay_ms, sl_cfg.ctrl_hold_delay_ms, sl_cfg.key_hold_ms, sl_cfg.auto_click,
+        )
         return jsonify({
             "status": "ok",
             "key_delay_ms": sl_cfg.key_delay_ms,
             "ctrl_hold_delay_ms": sl_cfg.ctrl_hold_delay_ms,
+            "key_hold_ms": sl_cfg.key_hold_ms,
+            "auto_click": sl_cfg.auto_click,
         })
 
     return app

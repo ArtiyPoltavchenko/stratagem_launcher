@@ -137,6 +137,42 @@ class TestSettings:
         data = client.get("/api/settings").get_json()
         assert data["key_delay_ms"] == 123
 
+    def test_get_includes_key_hold_ms(self, client):
+        data = client.get("/api/settings").get_json()
+        assert "key_hold_ms" in data
+
+    def test_update_key_hold(self, client):
+        r = client.post("/api/settings", json={"key_hold_ms": 60})
+        assert r.status_code == 200
+        assert r.get_json()["key_hold_ms"] == 60
+
+    def test_key_hold_persists_in_get(self, client):
+        client.post("/api/settings", json={"key_hold_ms": 55})
+        data = client.get("/api/settings").get_json()
+        assert data["key_hold_ms"] == 55
+
+    def test_invalid_key_hold_too_high(self, client):
+        r = client.post("/api/settings", json={"key_hold_ms": 9999})
+        assert r.status_code == 400
+
+    def test_update_auto_click(self, client):
+        r = client.post("/api/settings", json={"auto_click": True})
+        assert r.status_code == 200
+        assert r.get_json()["auto_click"] is True
+
+    def test_auto_click_persists_in_get(self, client):
+        client.post("/api/settings", json={"auto_click": True})
+        data = client.get("/api/settings").get_json()
+        assert data["auto_click"] is True
+
+    def test_settings_post_logs(self, client, caplog):
+        """POST /api/settings emits log lines with the received values."""
+        import logging
+        with caplog.at_level(logging.INFO, logger="server.app"):
+            client.post("/api/settings", json={"key_delay_ms": 75})
+        messages = " ".join(r.message for r in caplog.records)
+        assert "75" in messages
+
 
 class TestManualAPI:
     def test_start_ok(self, client):
