@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (QR canvas fix + landscape layout fix)
+> Last updated: 2026-03-17 (Feature: Auto-Install ADB)
 
 ---
 
@@ -234,6 +234,22 @@ Ctrl DOWN → [ctrl_delay 150ms] → key DOWN → [key_hold 50ms] → key UP →
 
 ### Result
 82 tests passing (10 new). Note on Bug 2: sequence not clearing after timeout was already fixed in Phase 10 via `_stopManualMode()` client-side timer.
+
+---
+
+## Feature: Auto-Install ADB (2026-03-17)
+
+### What
+"Install ADB" button in Settings row. Downloads Android Platform Tools (~10 MB) without admin rights, extracts to `%LOCALAPPDATA%\StratagramLauncher\platform-tools\adb.exe`.
+
+### Implementation
+- `PLATFORM_TOOLS_URL` / `PLATFORM_TOOLS_DIR` / `ADB_EXE` module-level constants
+- `_get_adb_path()`: local install → `shutil.which("adb")` on PATH
+- `_install_adb()`: daemon thread; `urlretrieve` with `reporthook` for live `%` on button; extracts zip to parent dir; calls `_on_adb_installed()` via `root.after(0, ...)`
+- `_on_adb_installed()`: green "ADB ✓ Installed" button + info dialog
+- `_setup_usb()`: centralises USB subprocess; passes `ADB_PATH` env var; warns if no adb found
+- `scripts/setup_usb.bat`: uses `%ADB_PATH%` if set, otherwise system `adb`
+- Button initialised disabled/green if adb already found at startup
 
 ---
 

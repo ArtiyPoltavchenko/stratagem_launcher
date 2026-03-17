@@ -7,6 +7,13 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Feature: Auto-Install ADB
+
+- `desktop/server_manager.py`: "Install ADB" button in Settings row — downloads Android Platform Tools (~10 MB) via `urllib.request.urlretrieve` to `%LOCALAPPDATA%\StratagramLauncher\platform-tools\adb.exe`; no admin rights required; progress % shown on button; button turns green "ADB ✓ Installed" and disables on success
+- `_get_adb_path()`: checks local install first, then `shutil.which("adb")` on system PATH
+- `_setup_usb()`: replaces inline subprocess; passes `ADB_PATH` env var to bat; shows warning if adb not found
+- `scripts/setup_usb.bat`: reads `ADB_PATH` env var if set, falls back to system `adb`
+
 ### 2026-03-17 — QR PhotoImage rewrite
 
 - `desktop/server_manager.py`: replaced `tk.Canvas` QR renderer with `tk.PhotoImage.put()` approach — builds pixel rows as `"{#000000 #ffffff ...}"` strings, calls `img.put()` once; no `winfo_width()`, no PIL, no geometry race condition
