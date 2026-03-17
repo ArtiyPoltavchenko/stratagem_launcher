@@ -7,6 +7,12 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — QR Code: Canvas renderer, no PIL
+- `desktop/server_manager.py`: replaced PIL/ImageTk QR with `tk.Canvas` — draws QR matrix via `qr.get_matrix()` directly as rectangles; no PIL dependency, no GC issues, auto-redraws on `<Configure>` resize
+- `desktop/server_manager.py`: replaced `qr_label` + `qr_hint` Labels with `qr_canvas` (Canvas) + `qr_url_label` (yellow URL below)
+- `scripts/build_exe.bat`: removed `--collect-all PIL`, `--hidden-import PIL.ImageTk/PIL.Image`
+- `requirements.txt`: `qrcode[pil]` → `qrcode>=7.0` (no Pillow extras needed)
+
 ### 2026-03-17 — Phase 9 Post-Release: GUI Bug Fixes
 - `desktop/server_manager.py`: `SetProcessDpiAwareness(2)` in `main()` before `Tk()` — crisp text on 2K/4K
 - `desktop/server_manager.py`: QR code fix — `QRCode(box_size=6, border=2)` + `.convert("RGB")` + `Image.NEAREST`; `self._qr_image` ref prevents GC blank-label bug

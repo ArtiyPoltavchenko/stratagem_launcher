@@ -172,7 +172,7 @@ class ServerManagerApp:
 
         self._server_thread: ServerThread | None = None
         self._log_queue: queue.Queue = queue.Queue()
-        self._qr_image = None  # holds ImageTk ref to prevent GC
+        # qr_canvas and qr_url_label are set in _build_ui()
 
         # Shared mutable config — slider updates it live while server runs
         self._cfg = Config()
@@ -309,12 +309,20 @@ class ServerManagerApp:
         qr_frame = tk.Frame(left, bg=COLOR_PANEL, bd=1, relief="solid")
         qr_frame.pack(fill="both", expand=True, padx=4, pady=8)
 
-        self._qr_hint = tk.Label(
-            qr_frame, text="", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        tk.Label(
+            qr_frame, text="Open on phone:", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        ).pack(pady=(8, 2))
+
+        self.qr_canvas = tk.Canvas(
+            qr_frame, width=200, height=200, bg="#FFFFFF", highlightthickness=0,
         )
-        self._qr_hint.pack(pady=(8, 2))
-        self._qr_label = tk.Label(qr_frame, bg=COLOR_PANEL, cursor="arrow")
-        self._qr_label.pack(expand=True)
+        self.qr_canvas.pack(fill="both", expand=True, padx=10, pady=5)
+        self.qr_canvas.bind("<Configure>", lambda e: self._refresh_qr())
+
+        self.qr_url_label = tk.Label(
+            qr_frame, text="", bg=COLOR_PANEL, fg=COLOR_YEL, font=F_SM,
+        )
+        self.qr_url_label.pack(pady=(0, 8))
 
         # ── Log viewer — fills entire right pane ───────────────────────────
         log_frame = self._make_panel(right, " Log ")
@@ -382,11 +390,12 @@ class ServerManagerApp:
         self._refresh_qr()
 
     def _refresh_qr(self) -> None:
+        """Draw QR code directly on tkinter Canvas — no PIL needed."""
         port = self._get_port()
         mode = self._mode_var.get()
         lan  = get_lan_ip()
 
-        # WiFi URL
+        # Always update connection URL label vars
         if mode == "wifi" and lan:
             wifi_url = f"http://{lan}:{port}"
             self._wifi_url_var.set(wifi_url)
@@ -397,51 +406,61 @@ class ServerManagerApp:
         # Local URL — use 127.0.0.1 explicitly (Windows 11: localhost → ::1 IPv6)
         self._local_url_var.set(f"http://127.0.0.1:{port}")
 
-        # QR code — only meaningful in WiFi mode
+        # Non-WiFi modes: no QR needed
         if mode in ("local", "usb"):
-            self._qr_hint.configure(text="")
-            self._qr_label.configure(
-                image="",
-                text="Open  http://127.0.0.1:{} in browser".format(port),
-                fg=COLOR_DIM, font=F_SM,
-            )
-            self._qr_image = None
+            self.qr_canvas.delete("all")
+            self.qr_url_label.configure(text=f"http://127.0.0.1:{port}")
             return
 
         if not wifi_url:
-            self._qr_hint.configure(text="")
-            self._qr_label.configure(
-                image="", text="(No LAN IP detected — check network)",
-                fg=COLOR_DIM, font=F_SM,
-            )
-            self._qr_image = None
+            self.qr_canvas.delete("all")
+            self.qr_url_label.configure(text="(No LAN IP — check network)")
             return
 
-        # Try to render QR code image
-        try:
-            import qrcode                    # type: ignore[import]
-            from PIL import Image, ImageTk   # type: ignore[import]
+        # WiFi mode — generate and draw QR matrix on Canvas
+        self.qr_url_label.configure(text=wifi_url)
 
-            qr = qrcode.QRCode(box_size=6, border=2)
-            qr.add_data(wifi_url)
-            qr.make(fit=True)
-            # convert("RGB") — ImageTk requires 8-bit image, not 1-bit
-            pil_img = qr.make_image(
-                fill_color="white", back_color="#1a1a1a"
-            ).convert("RGB")
-            # NEAREST keeps QR pixels crisp (no blurring)
-            pil_img = pil_img.resize((200, 200), Image.NEAREST)
-            # Must store on self — local var would be GC'd and Label goes blank
-            self._qr_image = ImageTk.PhotoImage(pil_img)
-            self._qr_hint.configure(text="Scan to connect from phone →", fg=COLOR_DIM)
-            self._qr_label.configure(image=self._qr_image, text="")
-        except Exception:
-            # PIL not available or QR generation failed — show URL as text fallback
-            self._qr_hint.configure(text="Open on phone:", fg=COLOR_DIM)
-            self._qr_label.configure(
-                image="", text=wifi_url, fg=COLOR_YEL, font=F_BOLD,
-            )
-            self._qr_image = None
+        try:
+            import qrcode  # type: ignore[import]
+        except ImportError:
+            self.qr_canvas.delete("all")
+            return
+
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=1,
+            border=2,
+        )
+        qr.add_data(wifi_url)
+        qr.make(fit=True)
+        matrix = qr.get_matrix()   # list[list[bool]] — True = dark module
+
+        rows = len(matrix)
+        cols = len(matrix[0]) if rows else 0
+
+        canvas_size = min(self.qr_canvas.winfo_width(), self.qr_canvas.winfo_height())
+        if canvas_size < 10:
+            canvas_size = 200   # fallback before first Tk layout pass
+
+        box = max(1, canvas_size // max(rows, cols, 1))
+        total_w = cols * box
+        total_h = rows * box
+        ox = (canvas_size - total_w) // 2
+        oy = (canvas_size - total_h) // 2
+
+        self.qr_canvas.delete("all")
+        self.qr_canvas.create_rectangle(0, 0, canvas_size, canvas_size,
+                                         fill="#FFFFFF", outline="")
+        for r, row in enumerate(matrix):
+            for c, cell in enumerate(row):
+                if cell:
+                    x1 = ox + c * box
+                    y1 = oy + r * box
+                    self.qr_canvas.create_rectangle(
+                        x1, y1, x1 + box, y1 + box,
+                        fill="#000000", outline="",
+                    )
 
     def _on_delay_change(self, val: str) -> None:
         ms = int(val)
