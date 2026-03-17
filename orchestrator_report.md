@@ -361,7 +361,7 @@ Ties cross cell size to both available width (50vw / 3 columns) and available he
 | 2026-03-17 | Start/Stop produced no log | Added `_log()` helper; both actions now log to panel |
 | 2026-03-17 | Closing app with no server running caused unnecessary blocking call | `_on_close` checks `is_alive()` before calling `_stop()` |
 | 2026-03-17 | Landscape: D-pad cross overlapped slider; yellow outline exceeded viewport | Cancel btn moved out of topbar in HTML; `inset box-shadow` replaces `outline` |
-| 2026-03-17 | QR white square — `winfo_width()=1` before mainloop → box_size=0 | Fixed-size canvas (`QR_CANVAS_SIZE=260`), `_draw_qr()` method, `update_idletasks()` before draw |
+| 2026-03-17 | QR white square — `winfo_width()=1` before mainloop → box_size=0 | Switched to `tk.PhotoImage.put()` — no Canvas, no geometry dependency, `QR_IMG_SIZE=260` |
 | 2026-03-17 | Landscape: cards/dpad overlapping, dpad off-screen on S23 Ultra | `min-width:0` on both panels, `height:auto` on cards, `--cell` from dvh, `overflow:hidden` on dpad |
 
 ---

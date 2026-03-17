@@ -7,6 +7,12 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — QR PhotoImage rewrite
+
+- `desktop/server_manager.py`: replaced `tk.Canvas` QR renderer with `tk.PhotoImage.put()` approach — builds pixel rows as `"{#000000 #ffffff ...}"` strings, calls `img.put()` once; no `winfo_width()`, no PIL, no geometry race condition
+- `self._qr_photo` holds the image reference (prevents GC); `self._qr_label` (tk.Label) shows it
+- White-bg `qr_frame` provides quiet zone; `QR_CANVAS_SIZE` renamed to `QR_IMG_SIZE`
+
 ### 2026-03-17 — QR Canvas Fix + Landscape Layout Fix
 
 **QR (`desktop/server_manager.py`):**
