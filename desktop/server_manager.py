@@ -14,9 +14,10 @@ import logging
 import os
 import queue
 import socket
+import subprocess
 import sys
 import threading
-from tkinter import scrolledtext
+from tkinter import messagebox, scrolledtext
 import tkinter as tk
 
 
@@ -383,8 +384,23 @@ class ServerManagerApp:
             return 5000
 
     def _on_mode_change(self) -> None:
-        if self._mode_var.get() == "usb":
+        mode = self._mode_var.get()
+        if mode == "usb":
             self._usb_hint.pack(fill="x", padx=12, pady=(0, 10))
+            messagebox.showinfo(
+                "USB Setup",
+                "1. Connect phone via USB\n"
+                "2. Enable USB Debugging on phone\n"
+                "3. Click OK to run ADB setup",
+            )
+            logging.getLogger(__name__).info("[USB] Running ADB port forwarding...")
+            try:
+                subprocess.Popen(
+                    ["cmd", "/c", resource_path("scripts\\setup_usb.bat")],
+                    creationflags=subprocess.CREATE_NEW_CONSOLE,
+                )
+            except Exception as exc:
+                logging.getLogger(__name__).error("[USB] Failed to run setup_usb.bat: %s", exc)
         else:
             self._usb_hint.pack_forget()
         self._refresh_qr()
