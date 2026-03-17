@@ -643,8 +643,12 @@ function initSearch() {
 
 // ------------------------------------------------------------------- d-pad
 
+const SWIPE_THRESHOLD = 30;  // px — below this = tap, above = swipe
+
 let dpadActive = false;
 let dpadSequence = [];
+let _swipeTouchStartX = 0;
+let _swipeTouchStartY = 0;
 
 // Auto-release timer state
 let _autoReleaseTimer = null;
@@ -793,14 +797,45 @@ function renderDpadSequence() {
 }
 
 function setDpadStatus(active) {
-  const text    = active ? 'Ctrl held — tap arrows to enter sequence' : 'Ctrl released';
-  const inactiveClass = 'dpad-status--inactive';
+  const text = active ? 'Ctrl held — tap arrows to enter sequence' : 'Ctrl released';
   for (const id of ['dpad-status', 'ldpad-status']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.textContent = text;
-    el.classList.toggle(inactiveClass, !active);
+    el.classList.toggle('dpad-status--inactive', !active);
   }
+  // Visual swipe-zone border: dashed when manual mode is on
+  const grid = document.getElementById('grid');
+  if (grid) grid.classList.toggle('manual-active', active);
+}
+
+function initSwipe() {
+  const grid = document.getElementById('grid');
+
+  grid.addEventListener('touchstart', e => {
+    const t = e.changedTouches[0];
+    _swipeTouchStartX = t.clientX;
+    _swipeTouchStartY = t.clientY;
+  }, { passive: true });
+
+  grid.addEventListener('touchend', e => {
+    // Only intercept swipes in loadout view (not All view, not edit mode)
+    if (activeLoadoutId === null || editLoadoutId !== null) return;
+
+    const t  = e.changedTouches[0];
+    const dx = t.clientX - _swipeTouchStartX;
+    const dy = t.clientY - _swipeTouchStartY;
+
+    if (Math.abs(dx) < SWIPE_THRESHOLD && Math.abs(dy) < SWIPE_THRESHOLD) {
+      return; // small movement = tap, let click fire normally
+    }
+
+    e.preventDefault(); // block synthesized click
+    const direction = Math.abs(dx) > Math.abs(dy)
+      ? (dx > 0 ? 'right' : 'left')
+      : (dy > 0 ? 'down' : 'up');
+    dpadTap(direction);
+  }, { passive: false });
 }
 
 async function cancelInlineDpad() {
@@ -832,6 +867,7 @@ async function boot() {
   initSearch();
   initLoadouts();
   initDpad();
+  initSwipe();
   setStatus('checking', 'Connecting…');
 
   try {
