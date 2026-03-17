@@ -1,0 +1,559 @@
+{
+  "version": "2.0.0",
+  "game_version": "Helldivers 2 (2024-2025 patches)",
+  "note": "Key codes based on community data. Verify in-game. Keys = directional input AFTER holding Ctrl. Mapping: up=W, down=S, left=A, right=D.",
+  "icon_repo": "https://raw.githubusercontent.com/nvigneux/Helldivers-2-Stratagems-icons-svg/master",
+  "icon_license": "Free to use (nvigneux/Helldivers-2-Stratagems-icons-svg)",
+  "key_mapping": {
+    "up": "w",
+    "down": "s",
+    "left": "a",
+    "right": "d"
+  },
+  "categories": {
+    "orbital":  { "name": "Orbital",          "color": "#d32f2f" },
+    "eagle":    { "name": "Eagle",            "color": "#1e88e5" },
+    "support":  { "name": "Support Weapons",  "color": "#43a047" },
+    "backpack": { "name": "Backpack",         "color": "#7b1fa2" },
+    "defense":  { "name": "Defensive",        "color": "#f57c00" },
+    "mission":  { "name": "Mission",          "color": "#f5c518" }
+  },
+  "stratagems": [
+    {
+      "id": "reinforce",
+      "name": "Reinforce",
+      "category": "mission",
+      "keys": ["up", "down", "right", "left", "up"],
+      "icon": "General Stratagems/Reinforce.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "sos_beacon",
+      "name": "SOS Beacon",
+      "category": "mission",
+      "keys": ["up", "down", "right", "up"],
+      "icon": "General Stratagems/SOS Beacon.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "resupply",
+      "name": "Resupply",
+      "category": "mission",
+      "keys": ["down", "down", "up", "right"],
+      "icon": "General Stratagems/Resupply.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "super_earth_flag",
+      "name": "Super Earth Flag",
+      "category": "mission",
+      "keys": ["down", "up", "down", "up"],
+      "icon": "General Stratagems/Super Earth Flag.svg",
+      "cooldown": 0,
+      "verified": false
+    },
+    {
+      "id": "upload_data",
+      "name": "Upload Data",
+      "category": "mission",
+      "keys": ["left", "right", "up", "up", "up"],
+      "icon": "General Stratagems/Upload Data.svg",
+      "cooldown": 0,
+      "verified": false
+    },
+    {
+      "id": "hellbomb",
+      "name": "Hellbomb",
+      "category": "mission",
+      "keys": ["down", "up", "left", "down", "up", "right", "down", "up"],
+      "icon": "General Stratagems/Hellbomb.svg",
+      "cooldown": 0,
+      "verified": false
+    },
+    {
+      "id": "seaf_artillery",
+      "name": "SEAF Artillery",
+      "category": "mission",
+      "keys": ["right", "up", "up", "down"],
+      "icon": "General Stratagems/SEAF Artillery.svg",
+      "cooldown": 0,
+      "verified": false
+    },
+
+    {
+      "id": "orbital_precision_strike",
+      "name": "Orbital Precision Strike",
+      "category": "orbital",
+      "keys": ["right", "right", "up"],
+      "icon": "Bridge/Orbital Precision Strike.svg",
+      "cooldown": 100,
+      "verified": true
+    },
+    {
+      "id": "orbital_gas_strike",
+      "name": "Orbital Gas Strike",
+      "category": "orbital",
+      "keys": ["right", "right", "down", "right"],
+      "icon": "Bridge/Orbital Gas Strike.svg",
+      "cooldown": 75,
+      "verified": false
+    },
+    {
+      "id": "orbital_ems_strike",
+      "name": "Orbital EMS Strike",
+      "category": "orbital",
+      "keys": ["right", "right", "left", "down"],
+      "icon": "Bridge/Orbital EMS Strike.svg",
+      "cooldown": 75,
+      "verified": false
+    },
+    {
+      "id": "orbital_smoke_strike",
+      "name": "Orbital Smoke Strike",
+      "category": "orbital",
+      "keys": ["right", "right", "down", "up"],
+      "icon": "Bridge/Orbital Smoke Strike.svg",
+      "cooldown": 100,
+      "verified": false
+    },
+    {
+      "id": "orbital_gatling_barrage",
+      "name": "Orbital Gatling Barrage",
+      "category": "orbital",
+      "keys": ["right", "down", "left", "up", "up"],
+      "icon": "Orbital Cannons/Orbital Gatling Barrage.svg",
+      "cooldown": 80,
+      "verified": false
+    },
+    {
+      "id": "orbital_airburst_strike",
+      "name": "Orbital Airburst Strike",
+      "category": "orbital",
+      "keys": ["right", "right", "right"],
+      "icon": "Orbital Cannons/Orbital Airburst Strike.svg",
+      "cooldown": 120,
+      "verified": false
+    },
+    {
+      "id": "orbital_120mm_he_barrage",
+      "name": "Orbital 120MM HE Barrage",
+      "category": "orbital",
+      "keys": ["right", "right", "down", "left", "right", "down"],
+      "icon": "Orbital Cannons/Orbital 120MM HE Barrage.svg",
+      "cooldown": 240,
+      "verified": false
+    },
+    {
+      "id": "orbital_380mm_he_barrage",
+      "name": "Orbital 380MM HE Barrage",
+      "category": "orbital",
+      "keys": ["right", "down", "up", "up", "left", "down", "down"],
+      "icon": "Orbital Cannons/Orbital 380MM HE Barrage.svg",
+      "cooldown": 240,
+      "verified": false
+    },
+    {
+      "id": "orbital_walking_barrage",
+      "name": "Orbital Walking Barrage",
+      "category": "orbital",
+      "keys": ["right", "down", "right", "down", "right", "down"],
+      "icon": "Orbital Cannons/Orbital Walking Barrage.svg",
+      "cooldown": 240,
+      "verified": false
+    },
+    {
+      "id": "orbital_laser",
+      "name": "Orbital Laser",
+      "category": "orbital",
+      "keys": ["right", "down", "up", "right", "down"],
+      "icon": "Orbital Cannons/Orbital Laser.svg",
+      "cooldown": 300,
+      "verified": false
+    },
+    {
+      "id": "orbital_railcannon_strike",
+      "name": "Orbital Railcannon Strike",
+      "category": "orbital",
+      "keys": ["right", "up", "down", "down", "right"],
+      "icon": "Orbital Cannons/Orbital Railcannon Strike.svg",
+      "cooldown": 210,
+      "verified": false
+    },
+    {
+      "id": "orbital_napalm_barrage",
+      "name": "Orbital Napalm Barrage",
+      "category": "orbital",
+      "keys": ["right", "right", "down", "left", "right", "up"],
+      "icon": "Orbital Cannons/Orbital Napalm Barrage.svg",
+      "cooldown": 240,
+      "verified": false
+    },
+
+    {
+      "id": "eagle_strafing_run",
+      "name": "Eagle Strafing Run",
+      "category": "eagle",
+      "keys": ["up", "right", "right"],
+      "icon": "Hangar/Eagle Strafing Run.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_airstrike",
+      "name": "Eagle Airstrike",
+      "category": "eagle",
+      "keys": ["up", "right", "down", "right"],
+      "icon": "Hangar/Eagle Airstrike.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_cluster_bomb",
+      "name": "Eagle Cluster Bomb",
+      "category": "eagle",
+      "keys": ["up", "right", "down", "down", "right"],
+      "icon": "Hangar/Eagle Cluster Bomb.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_napalm_airstrike",
+      "name": "Eagle Napalm Airstrike",
+      "category": "eagle",
+      "keys": ["up", "right", "down", "up"],
+      "icon": "Hangar/Eagle Napalm Airstrike.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_smoke_strike",
+      "name": "Eagle Smoke Strike",
+      "category": "eagle",
+      "keys": ["up", "right", "up", "down"],
+      "icon": "Hangar/Eagle Smoke Strike.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_110mm_rocket_pods",
+      "name": "Eagle 110MM Rocket Pods",
+      "category": "eagle",
+      "keys": ["up", "right", "up", "left"],
+      "icon": "Hangar/Eagle 110MM Rocket Pods.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+    {
+      "id": "eagle_500kg_bomb",
+      "name": "Eagle 500KG Bomb",
+      "category": "eagle",
+      "keys": ["up", "right", "down", "down", "down"],
+      "icon": "Hangar/Eagle 500KG Bomb.svg",
+      "cooldown": 15,
+      "verified": false
+    },
+
+    {
+      "id": "machine_gun",
+      "name": "Machine Gun",
+      "category": "support",
+      "keys": ["down", "left", "down", "up", "right"],
+      "icon": "Patriotic Administration Center/Machine Gun.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "anti_materiel_rifle",
+      "name": "Anti-Materiel Rifle",
+      "category": "support",
+      "keys": ["down", "left", "right", "up", "down"],
+      "icon": "Patriotic Administration Center/Anti-Materiel Rifle.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "stalwart",
+      "name": "Stalwart",
+      "category": "support",
+      "keys": ["down", "left", "down", "up", "up", "left"],
+      "icon": "Patriotic Administration Center/Stalwart.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "expendable_anti_tank",
+      "name": "Expendable Anti-Tank",
+      "category": "support",
+      "keys": ["down", "down", "left", "up", "right"],
+      "icon": "Patriotic Administration Center/Expendable Anti-Tank.svg",
+      "cooldown": 70,
+      "verified": false
+    },
+    {
+      "id": "recoilless_rifle",
+      "name": "Recoilless Rifle",
+      "category": "support",
+      "keys": ["down", "left", "right", "right", "left"],
+      "icon": "Patriotic Administration Center/Recoilless Rifle.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "flamethrower",
+      "name": "Flamethrower",
+      "category": "support",
+      "keys": ["down", "left", "up", "down", "up"],
+      "icon": "Patriotic Administration Center/Flamethrower.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "autocannon",
+      "name": "Autocannon",
+      "category": "support",
+      "keys": ["down", "left", "down", "up", "up", "right"],
+      "icon": "Patriotic Administration Center/Autocannon.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "heavy_machine_gun",
+      "name": "Heavy Machine Gun",
+      "category": "support",
+      "keys": ["down", "left", "up", "down", "down"],
+      "icon": "Patriotic Administration Center/Heavy Machine Gun.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "railgun",
+      "name": "Railgun",
+      "category": "support",
+      "keys": ["down", "right", "down", "up", "left", "right"],
+      "icon": "Patriotic Administration Center/Railgun.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "spear",
+      "name": "Spear",
+      "category": "support",
+      "keys": ["down", "down", "up", "down", "down"],
+      "icon": "Patriotic Administration Center/Spear.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "commando",
+      "name": "Commando",
+      "category": "support",
+      "keys": ["down", "left", "up", "down", "right"],
+      "icon": "Patriotic Administration Center/Commando.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "grenade_launcher",
+      "name": "Grenade Launcher",
+      "category": "support",
+      "keys": ["down", "left", "up", "left", "down"],
+      "icon": "Engineering Bay/Grenade Launcher.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "laser_cannon",
+      "name": "Laser Cannon",
+      "category": "support",
+      "keys": ["down", "left", "down", "up", "left"],
+      "icon": "Engineering Bay/Laser Cannon.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "arc_thrower",
+      "name": "Arc Thrower",
+      "category": "support",
+      "keys": ["down", "right", "down", "left", "left", "down"],
+      "icon": "Engineering Bay/Arc Thrower.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "quasar_cannon",
+      "name": "Quasar Cannon",
+      "category": "support",
+      "keys": ["down", "down", "up", "left", "right"],
+      "icon": "Engineering Bay/Quasar Cannon.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+
+    {
+      "id": "jump_pack",
+      "name": "Jump Pack",
+      "category": "backpack",
+      "keys": ["down", "up", "up", "down", "up"],
+      "icon": "Hangar/Jump Pack.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "supply_pack",
+      "name": "Supply Pack",
+      "category": "backpack",
+      "keys": ["down", "left", "down", "up", "up", "down"],
+      "icon": "Engineering Bay/Supply Pack.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "guard_dog_rover",
+      "name": "Guard Dog Rover",
+      "category": "backpack",
+      "keys": ["down", "up", "left", "up", "right", "down"],
+      "icon": "Engineering Bay/Guard Dog Rover.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "guard_dog",
+      "name": "Guard Dog",
+      "category": "backpack",
+      "keys": ["down", "up", "left", "up", "right", "down"],
+      "icon": "Robotics Workshop/Guard Dog.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+    {
+      "id": "ballistic_shield",
+      "name": "Ballistic Shield Backpack",
+      "category": "backpack",
+      "keys": ["down", "left", "down", "down", "up", "left"],
+      "icon": "Engineering Bay/Ballistic Shield Backpack.svg",
+      "cooldown": 300,
+      "verified": false
+    },
+    {
+      "id": "shield_generator_pack",
+      "name": "Shield Generator Pack",
+      "category": "backpack",
+      "keys": ["down", "up", "left", "right", "left", "right"],
+      "icon": "Engineering Bay/Shield Generator Pack.svg",
+      "cooldown": 480,
+      "verified": false
+    },
+
+    {
+      "id": "hmg_emplacement",
+      "name": "HMG Emplacement",
+      "category": "defense",
+      "keys": ["down", "up", "left", "right", "right", "left"],
+      "icon": "Bridge/HMG Emplacement.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "shield_generator_relay",
+      "name": "Shield Generator Relay",
+      "category": "defense",
+      "keys": ["down", "down", "left", "right", "left", "right"],
+      "icon": "Bridge/Shield Generator Relay.svg",
+      "cooldown": 90,
+      "verified": false
+    },
+    {
+      "id": "tesla_tower",
+      "name": "Tesla Tower",
+      "category": "defense",
+      "keys": ["down", "up", "right", "up", "left", "up"],
+      "icon": "Bridge/Tesla Tower.svg",
+      "cooldown": 150,
+      "verified": false
+    },
+    {
+      "id": "anti_personnel_minefield",
+      "name": "Anti-Personnel Minefield",
+      "category": "defense",
+      "keys": ["down", "left", "up", "right"],
+      "icon": "Engineering Bay/Anti-Personnel Minefield.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "incendiary_mines",
+      "name": "Incendiary Mines",
+      "category": "defense",
+      "keys": ["down", "left", "left", "down"],
+      "icon": "Engineering Bay/Incendiary Mines.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "machine_gun_sentry",
+      "name": "Machine Gun Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "right", "up"],
+      "icon": "Robotics Workshop/Machine Gun Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "gatling_sentry",
+      "name": "Gatling Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "left"],
+      "icon": "Robotics Workshop/Gatling Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "mortar_sentry",
+      "name": "Mortar Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "right", "down"],
+      "icon": "Robotics Workshop/Mortar Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "autocannon_sentry",
+      "name": "Autocannon Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "up", "left", "up"],
+      "icon": "Robotics Workshop/Autocannon Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "rocket_sentry",
+      "name": "Rocket Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "right", "left"],
+      "icon": "Robotics Workshop/Rocket Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "ems_mortar_sentry",
+      "name": "EMS Mortar Sentry",
+      "category": "defense",
+      "keys": ["down", "up", "right", "down", "right"],
+      "icon": "Robotics Workshop/EMS Mortar Sentry.svg",
+      "cooldown": 180,
+      "verified": false
+    },
+    {
+      "id": "patriot_exosuit",
+      "name": "Patriot Exosuit",
+      "category": "defense",
+      "keys": ["left", "down", "right", "up", "left", "down", "down"],
+      "icon": "Robotics Workshop/Patriot Exosuit.svg",
+      "cooldown": 600,
+      "verified": false
+    }
+  ]
+}
