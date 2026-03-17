@@ -392,13 +392,22 @@ class ServerManagerApp:
         try:
             import qrcode                    # type: ignore[import]
             from PIL import Image, ImageTk   # type: ignore[import]
-            img = qrcode.make(wifi_url)
-            img = img.resize((190, 190), Image.LANCZOS)
-            self._qr_image = ImageTk.PhotoImage(img)
+
+            qr = qrcode.QRCode(box_size=6, border=2)
+            qr.add_data(wifi_url)
+            qr.make(fit=True)
+            # convert("RGB") — ImageTk requires 8-bit image, not 1-bit
+            pil_img = qr.make_image(
+                fill_color="white", back_color="#1a1a1a"
+            ).convert("RGB")
+            # NEAREST keeps QR pixels crisp (no blurring)
+            pil_img = pil_img.resize((200, 200), Image.NEAREST)
+            # Must store on self — local var would be GC'd and Label goes blank
+            self._qr_image = ImageTk.PhotoImage(pil_img)
             self._qr_hint.configure(text="Scan to connect from phone →", fg=COLOR_DIM)
             self._qr_label.configure(image=self._qr_image, text="")
         except Exception:
-            # PIL not available or QR generation failed — show URL as text
+            # PIL not available or QR generation failed — show URL as text fallback
             self._qr_hint.configure(text="Open on phone:", fg=COLOR_DIM)
             self._qr_label.configure(
                 image="", text=wifi_url, fg=COLOR_YEL, font=F_BOLD,
