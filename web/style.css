@@ -72,22 +72,33 @@ body {
 .header__status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 5px;
+}
+
+.signal-icon {
+  width: 16px;
+  height: 12px;
   color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: color 0.3s;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--text-dim);
   flex-shrink: 0;
 }
 
-.status-dot--ok { background: var(--success); }
-.status-dot--error { background: var(--error); }
+.status-dot--ok      { background: var(--success); }
+.status-dot--error   { background: var(--error); }
 .status-dot--checking { background: var(--accent-yellow); animation: pulse 1s infinite; }
+
+/* Signal icon colour follows connection state (CSS :has, Chrome 105+) */
+.header__status:has(.status-dot--ok)       .signal-icon { color: var(--success); }
+.header__status:has(.status-dot--error)    .signal-icon { color: var(--error); }
+.header__status:has(.status-dot--checking) .signal-icon { color: var(--accent-yellow); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }

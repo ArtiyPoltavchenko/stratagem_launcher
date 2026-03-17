@@ -95,11 +95,8 @@ async function checkHealth() {
 
 // ------------------------------------------------------------------ status
 
-function setStatus(state, text) {
-  const dot = document.getElementById('status-dot');
-  const label = document.getElementById('status-text');
-  dot.className = `status-dot status-dot--${state}`;
-  label.textContent = text;
+function setStatus(state, _text) {
+  document.getElementById('status-dot').className = `status-dot status-dot--${state}`;
 }
 
 // ---------------------------------------------------------------- loadouts
@@ -649,7 +646,9 @@ let dpadActive = false;
 let dpadSequence = [];
 
 function initDpad() {
-  document.getElementById('dpad-open-btn').addEventListener('click', openDpad);
+  // dpad-open-btn moved to FAB in loadout view (Step 7); guard until then
+  const openBtn = document.getElementById('dpad-open-btn');
+  if (openBtn) openBtn.addEventListener('click', openDpad);
   document.getElementById('dpad-close-btn').addEventListener('click', closeDpad);
   document.getElementById('dpad-execute-btn').addEventListener('click', dpadExecute);
 
