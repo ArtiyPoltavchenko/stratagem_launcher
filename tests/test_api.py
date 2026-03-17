@@ -99,10 +99,10 @@ class TestExecute:
 
     def test_correct_keys_passed_to_keypress(self, client):
         with patch("server.keypress.execute_stratagem", return_value=True) as mock_exec:
-            client.post("/api/execute", json={"id": "reinforce"})
+            client.post("/api/execute", json={"id": "orbital_precision_strike"})
         mock_exec.assert_called_once()
         args, kwargs = mock_exec.call_args
-        assert kwargs["keys"] == ["up", "down", "right", "left", "up"]
+        assert kwargs["keys"] == ["right", "right", "up"]
 
 
 class TestSettings:

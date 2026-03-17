@@ -7,6 +7,19 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Data: Full Stratagem List (DLC + Warbonds)
+
+- `data/stratagems.json`: expanded from 59 to 82 stratagems across 6 categories
+- Categories updated: `defense` → `defensive`, `mission` removed, `vehicle` added (`#795548`)
+- All base-game stratagems updated with full weapon designations (e.g. "AC-8 Autocannon")
+- Eagle cooldowns corrected to rearm cooldown (120–150s) with `"uses"` field per charge count
+- `"orbital_laser"` gets `"uses": 3`; `"eagle_500kg_bomb"` gets `"uses": 1`; etc.
+- Warbond stratagems: `"warbond"` field added (Truth Enforcers, Chemical Agents, Dust Devils, etc.)
+- New vehicle category: Patriot Exosuit, Emancipator Exosuit, Fast Recon Vehicle, Bastion
+- New backpack entries: Guard Dog K-9, Dog Breath, Hover Pack, Warp Pack, Portable Hellbomb, etc.
+- New defensive entries: Flame Sentry, Anti-Tank Emplacement, Gas Mines, Anti-Tank Mines, etc.
+- `tests/test_api.py`: updated `test_correct_keys_passed_to_keypress` to use `orbital_precision_strike` (removed `reinforce` which was in the now-deleted `mission` category)
+
 ### 2026-03-17 — Feature: Auto-Install ADB
 
 - `desktop/server_manager.py`: "Install ADB" button in Settings row — downloads Android Platform Tools (~10 MB) via `urllib.request.urlretrieve` to `%LOCALAPPDATA%\StratagramLauncher\platform-tools\adb.exe`; no admin rights required; progress % shown on button; button turns green "ADB ✓ Installed" and disables on success
