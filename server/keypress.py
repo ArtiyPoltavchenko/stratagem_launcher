@@ -29,15 +29,19 @@ except Exception:
 # always receive — and avoid OS hotkey interception (Ctrl+W, Ctrl+S, etc.).
 #
 # VK codes: W=0x57  A=0x41  S=0x53  D=0x44
+_VK_CODES: dict[str, int] = {
+    "up":    0x57,  # W
+    "down":  0x53,  # S
+    "left":  0x41,  # A
+    "right": 0x44,  # D
+}
+
+
 def _build_key_map() -> dict:
     if KeyCode is None:
         return {"up": "w", "down": "s", "left": "a", "right": "d"}
-    return {
-        "up":    KeyCode.from_vk(0x57),  # W
-        "down":  KeyCode.from_vk(0x53),  # S
-        "left":  KeyCode.from_vk(0x41),  # A
-        "right": KeyCode.from_vk(0x44),  # D
-    }
+    return {direction: KeyCode.from_vk(vk) for direction, vk in _VK_CODES.items()}
+
 
 _KEY_MAP = _build_key_map()
 
@@ -120,11 +124,13 @@ def manual_key(
         raise ValueError(f"Invalid direction: {direction!r}")
 
     key = _KEY_MAP[direction]
-    log.debug("[KEYPRESS] %.3f manual '%s' DOWN", time.time(), direction)
+    vk = _VK_CODES.get(direction, 0)
+    t0 = time.time()
+    log.debug("[KEYPRESS] 0.000s manual '%s' (VK=0x%02X) DOWN", direction, vk)
     _manual_keyboard.press(key)
     time.sleep(key_hold)
     _manual_keyboard.release(key)
-    log.debug("[KEYPRESS] %.3f manual '%s' UP", time.time(), direction)
+    log.debug("[KEYPRESS] %.3fs manual '%s' (VK=0x%02X) UP", time.time() - t0, direction, vk)
     _reset_manual_timer(timeout)
     return True
 
@@ -207,28 +213,30 @@ def execute_stratagem(
 
     try:
         keyboard = Controller()
+        t0 = time.time()
 
         keyboard.press(Key.ctrl)
-        log.debug("[KEYPRESS] %.3f Ctrl DOWN", time.time())
+        log.debug("[KEYPRESS] %.3fs Ctrl DOWN", 0.0)
         time.sleep(ctrl_delay)
 
         for direction in keys:
             key = _KEY_MAP[direction]
-            log.debug("[KEYPRESS] %.3f '%s' DOWN", time.time(), direction)
+            vk = _VK_CODES.get(direction, 0)
+            log.debug("[KEYPRESS] %.3fs '%s' (VK=0x%02X) DOWN", time.time() - t0, direction, vk)
             keyboard.press(key)
             time.sleep(key_hold)
             keyboard.release(key)
-            log.debug("[KEYPRESS] %.3f '%s' UP", time.time(), direction)
+            log.debug("[KEYPRESS] %.3fs '%s' (VK=0x%02X) UP", time.time() - t0, direction, vk)
             time.sleep(key_delay)
 
         keyboard.release(Key.ctrl)
-        log.debug("[KEYPRESS] %.3f Ctrl UP", time.time())
+        log.debug("[KEYPRESS] %.3fs Ctrl UP", time.time() - t0)
 
         if auto_click and MouseController is not None:
             time.sleep(0.05)
             mouse = MouseController()
             mouse.click(MouseButton.left)
-            log.debug("[KEYPRESS] %.3f LMB click (auto-throw)", time.time())
+            log.debug("[KEYPRESS] %.3fs LMB click (auto-throw)", time.time() - t0)
 
     finally:
         _lock.release()
