@@ -304,6 +304,7 @@ function renderGrid() {
   const inEditMode = editLoadoutId !== null;
 
   grid.className = 'grid' + (inLoadoutView ? ' grid--loadout' : '');
+  document.body.classList.toggle('body--loadout-view', inLoadoutView);
   grid.innerHTML = '';
 
   if (!list.length) {

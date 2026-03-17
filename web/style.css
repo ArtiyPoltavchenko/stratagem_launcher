@@ -247,32 +247,63 @@ body {
 }
 .card--edit-mode:hover { opacity: 1; }
 
-/* ------------------------------------------------- loadout view (2 cols) */
+/* ----------------------------------------- loadout view: mobile 4-col row */
 
 .grid--loadout {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 
 .grid--loadout .card {
-  min-height: 120px;
-  padding: 14px 10px 12px;
+  aspect-ratio: 3 / 4;
+  min-height: unset;
+  padding: 8px 4px 6px;
 }
 
 .grid--loadout .card__icon {
-  width: 52px;
-  height: 52px;
+  width: 36px;
+  height: 36px;
 }
 .grid--loadout .card__icon svg,
-.grid--loadout .card__icon img { width: 52px; height: 52px; }
+.grid--loadout .card__icon img { width: 36px; height: 36px; }
 
 .grid--loadout .card__name {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+}
+
+.grid--loadout .card__cd-label {
+  font-size: 0.58rem;
 }
 
 .grid--loadout .card__cooldown {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
 }
+
+/* Desktop: restore comfortable 2-col layout, no forced aspect-ratio */
+@media (min-width: 768px) {
+  .grid--loadout {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .grid--loadout .card {
+    aspect-ratio: unset;
+    min-height: 120px;
+    padding: 14px 10px 12px;
+  }
+  .grid--loadout .card__icon       { width: 52px; height: 52px; }
+  .grid--loadout .card__icon svg,
+  .grid--loadout .card__icon img   { width: 52px; height: 52px; }
+  .grid--loadout .card__name       { font-size: 0.72rem; line-height: initial; }
+  .grid--loadout .card__cd-label   { font-size: inherit; }
+  .grid--loadout .card__cooldown   { font-size: 1.4rem; }
+}
+
+/* Loadout view body state: hide search, tighten grid padding */
+.body--loadout-view .search-wrap { display: none; }
+.body--loadout-view .grid-wrap   { padding: 6px; }
 
 /* ------------------------------------------------------------------- tabs */
 
