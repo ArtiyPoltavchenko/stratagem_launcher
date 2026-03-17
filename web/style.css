@@ -925,29 +925,30 @@ body {
   }
 }
 
-/* Loadout view — landscape: cards left (45 vw) + D-pad right (55 vw) */
+/* Loadout view — landscape: cards left (40 vw) + D-pad right (60 vw) */
 @media (orientation: landscape) {
+  /* Two-column layout */
   .body--loadout-view #game-area {
     flex-direction: row;
     align-items: stretch;
   }
 
+  /* ---- Cards panel: 40 vw, 2×2 grid filling full height ---- */
   .body--loadout-view .grid-wrap {
     flex-shrink: 0;
-    width: 45vw;
-    padding: 6px;
+    width: 40vw;
+    padding: 4px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
-
-  /* 2×2 grid fills the full height of grid-wrap */
   .body--loadout-view .grid--loadout {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: 1fr;
     flex: 1;
     min-height: 0;
-    /* Remove portrait constraints */
     height: 100%;
-    grid-auto-rows: 1fr;
+    gap: 4px;
   }
   .body--loadout-view .grid--loadout .card {
     aspect-ratio: unset;
@@ -955,19 +956,76 @@ body {
     height: 100%;
   }
 
-  /* D-pad area takes remaining 55 vw */
+  /* ---- D-pad panel: 60 vw, flex column, items centred ---- */
   .body--loadout-view .loadout-dpad-area {
     flex: 1;
     min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 8px 6px;
+    gap: 2px;
   }
 
-  /* Smaller cross cells in landscape (less vertical space) */
+  /*
+   * Break ldpad-topbar so its children (sequence + cancel) become
+   * direct flex items of loadout-dpad-area and can be independently
+   * reordered. display:contents removes the topbar box without touching HTML.
+   */
+  .body--loadout-view .ldpad-topbar { display: contents; }
+
+  /* 1 — Sequence display: top, centred */
+  .body--loadout-view .ldpad-sequence {
+    order: 1;
+    min-height: 22px;
+    padding: 0 4px;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+  /* 2 — Countdown bar */
+  .body--loadout-view .ldpad-countdown-bar {
+    order: 2;
+    width: 80%;
+  }
+  /* 3 — Auto-release slider: compact row */
+  .body--loadout-view .ldpad-timer-row {
+    order: 3;
+    width: 100%;
+    padding: 0 4px;
+    gap: 4px;
+  }
+  .body--loadout-view .ldpad-timer-label,
+  .body--loadout-view .ldpad-timer-value { font-size: 0.65rem; }
+
+  /* 4 — Status text: hidden, not enough vertical space */
+  .body--loadout-view .ldpad-status { display: none; }
+
+  /* 5 — D-pad cross: takes remaining height, centred */
+  .body--loadout-view .ldpad-cross-wrap {
+    order: 5;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 10 — Cancel button: bottom, small */
+  .body--loadout-view .ldpad-cancel-btn {
+    order: 10;
+    align-self: center;
+    font-size: 0.7rem;
+    padding: 3px 12px;
+    margin-top: 2px;
+  }
+
+  /*
+   * Cross cell size: fit width in 60 vw, fit height in available viewport.
+   * Available height ≈ 100vh − header(~50px) − loadout-bar(~36px) − tabs(~44px) − overhead(~80px)
+   * → use min(vw-based, vh-based) so neither axis overflows.
+   */
   .ldpad-cross-wrap .dpad-cross {
-    --cell: clamp(56px, 14vw, 84px);
+    --cell: clamp(52px, min(16vw, 16vh), 95px);
     grid-template-columns: repeat(3, var(--cell));
     grid-template-rows:    repeat(3, var(--cell));
   }
-  .ldpad-cross-wrap .dpad-btn { font-size: clamp(1.1rem, 3.5vw, 1.6rem); }
+  .ldpad-cross-wrap .dpad-btn { font-size: clamp(1rem, 3.5vw, 1.7rem); }
 }
 
 /* ---------------------------------------------------------------- settings panel */
