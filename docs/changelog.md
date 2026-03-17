@@ -7,6 +7,12 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Phase 9 Post-Release: GUI Bug Fixes
+- `desktop/server_manager.py`: `SetProcessDpiAwareness(2)` in `main()` before `Tk()` — crisp text on 2K/4K
+- `desktop/server_manager.py`: QR code fix — `QRCode(box_size=6, border=2)` + `.convert("RGB")` + `Image.NEAREST`; `self._qr_image` ref prevents GC blank-label bug
+- `desktop/server_manager.py`: venv check on startup — friendly error + instructions if not in venv; skipped in PyInstaller bundle
+- `desktop/server_manager.py`: replaced static `left.pack_propagate(False)` layout with `PanedWindow(HORIZONTAL)` — draggable sash, log panel `stretch="always"`, `minsize=800×500`; QR area fills remaining space via `expand=True`
+
 ### 2026-03-17 — Phase 9: Desktop EXE — Server Manager
 - `desktop/__init__.py`, `desktop/server_manager.py`: tkinter GUI wrapping Flask server
 - `ServerThread`: werkzeug make_server() in daemon thread; shutdown() for clean stop

@@ -1,7 +1,7 @@
 # Progress Tracker — Stratagem Launcher
 
-> Last updated: 2026-03-16 (synced with orchestrator_report.md)
-> Tests: 67 passing
+> Last updated: 2026-03-17
+> Tests: 72 passing
 
 ## Phase 1: Project Skeleton ✅
 - [x] Directory structure, venv setup, requirements files
@@ -91,12 +91,19 @@
 - [x] TkLogHandler — thread-safe logging via queue.Queue + root.after() poll → ScrolledText
 - [x] Connection panel — auto LAN IP, WiFi/USB URLs, Copy buttons, port input
 - [x] QR code — qrcode → PIL → ImageTk (graceful fallback to URL text if PIL missing)
-- [x] Settings — WiFi/Localhost radio, key delay slider (live-updates shared Config)
+- [x] Settings — WiFi/Localhost/USB radio, key delay slider (live-updates shared Config)
 - [x] resource_path() helper for PyInstaller _MEIPASS bundling
-- [x] scripts/build_exe.bat — PyInstaller --onefile --windowed
+- [x] scripts/build_exe.bat — PyInstaller --onefile --windowed + --collect-all PIL/qrcode
 - [x] requirements-build.txt (pyinstaller); requirements.txt: qrcode[pil]
-- [x] 67 existing tests unchanged
+- [x] GET/PUT /api/loadouts — server-side persistence (survives IP changes)
+- [x] 72 tests passing (5 new TestLoadouts)
 - [ ] Manual test: build .exe, run standalone, connect from phone (Windows only)
+
+## Phase 9 Post-Release: GUI Bug Fixes ✅
+- [x] DPI awareness (SetProcessDpiAwareness 2) — sharp text on 2K/4K
+- [x] QR code render fixed — QRCode() + convert(RGB) + NEAREST, store ref on self
+- [x] Venv check on startup — clear error message if venv not activated
+- [x] Flexible PanedWindow layout — draggable splitter, log fills on resize, min 800×500
 
 ## Blockers & Issues
 
@@ -105,3 +112,9 @@
 | 2026-03-16 | start_server*.bat used wrong python command | ✅ Fixed | Restored `python -m server.app` |
 | 2026-03-16 | stratagems.json v2 icon_repo ignored by old app.js | ✅ Fixed | Added resolveIconUrl() |
 | 2026-03-16 | pynput raw chars unreliable in games | ✅ Fixed | KeyCode.from_vk() VK codes |
+| 2026-03-17 | Loadouts lost on IP change (localStorage origin-scoped) | ✅ Fixed | GET/PUT /api/loadouts server-side |
+| 2026-03-17 | Stop/Restart/Close hangs and crashes GUI | ✅ Fixed | shutdown() in daemon thread, callback |
+| 2026-03-17 | localhost:5000 ERR_CONNECTION_REFUSED (Win11 localhost→::1) | ✅ Fixed | URLs always use 127.0.0.1 |
+| 2026-03-17 | QR not shown in exe (PIL in try/except excluded by PyInstaller) | ✅ Fixed | --collect-all PIL/qrcode + convert(RGB) |
+| 2026-03-17 | Blurry text on HiDPI / 2K / 4K | ✅ Fixed | SetProcessDpiAwareness(2) before Tk() |
+| 2026-03-17 | Static layout, nothing stretches | ✅ Fixed | PanedWindow, stretch="always" on log |
