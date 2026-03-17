@@ -7,6 +7,11 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Phase 10: Loadout D-pad Redesign
+- `web/index.html`: header — removed `#status-text`, `#dpad-open-btn`; added inline SVG signal-bars icon; embedded D-pad (`#loadout-dpad-area`) with topbar/countdown/timer/status/cross; removed `dpad-execute-btn` from overlay; added FAB `#fab-dpad`
+- `web/style.css`: `.signal-icon` (16×12 SVG); CSS `:has()` signal colouring; `body--loadout-view` full-viewport flex layout; `.grid--loadout` 4×1 portrait + 2×2 landscape; embedded cross `clamp(72px,26vw,110px)`; ldpad countdown bar; swipe active outline; north marker `::after` on `.dpad-btn--up`; landscape loadout media query (45vw/55vw split); FAB `.fab-dpad` (56px circle, fixed bottom-right); FAB hidden in loadout view
+- `web/app.js`: `setStatus()` icon-only; `initDpad()` FAB wiring; auto-release timer (`_scheduleAutoRelease`, `_cancelAutoRelease`, `_tickCountdown`); `dpadTap()` auto-start on first tap; dual sequence/status display (overlay + embedded); `setDpadStatus()` toggles `manual-active` on `#grid`; `_stopManualMode()` shared cleanup; `initSwipe()` touch detection (30px threshold)
+
 ### 2026-03-17 — QR Code: Canvas renderer, no PIL
 - `desktop/server_manager.py`: replaced PIL/ImageTk QR with `tk.Canvas` — draws QR matrix via `qr.get_matrix()` directly as rectangles; no PIL dependency, no GC issues, auto-redraws on `<Configure>` resize
 - `desktop/server_manager.py`: replaced `qr_label` + `qr_hint` Labels with `qr_canvas` (Canvas) + `qr_url_label` (yellow URL below)

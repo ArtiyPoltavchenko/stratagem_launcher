@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (Phase 9 + post-release bug fixes complete)
+> Last updated: 2026-03-17 (Phase 10: Loadout D-pad Redesign complete)
 
 ---
 
@@ -200,6 +200,46 @@ Four bugs found during real-world exe testing and fixed:
 
 #### Bug 5: Window too small, text unreadable
 - **Fix**: All fonts scaled ~1.5×: base 9→13pt, bold 10→14pt, mono 8→11pt, status dot 14→20pt. Default window size 960×700 → 1160×840; minimum 800×620 → 980×720; left panel 330 → 430px.
+
+---
+
+## Phase 10: Loadout D-pad Redesign (2026-03-17)
+
+Combined loadout view + manual D-pad into a single gaming screen. Removed the separate D-pad overlay for loadout context.
+
+### Changes
+
+**`web/index.html`:**
+- Header: removed `#status-text` span and `#dpad-open-btn` button; added inline SVG signal-bars icon
+- Embedded D-pad (`#loadout-dpad-area`): topbar (sequence + Cancel), countdown bar, auto-release slider (1–5s), status, dpad-cross
+- Removed `dpad-execute-btn` from D-pad overlay
+- Added FAB `#fab-dpad` (fixed, visible only in All view)
+
+**`web/style.css`:**
+- Signal icon colouring via CSS `:has()` on `.header__status`
+- `body--loadout-view` class: `100dvh` flex layout, hides search, shows embedded D-pad
+- `.grid--loadout`: 4×1 portrait, aspect-ratio 3/4, icon 36px, name 0.62rem
+- Desktop override `@media(min-width:768px)`: 2-col, no aspect-ratio
+- Embedded cross: `clamp(72px,26vw,110px)` cells
+- Countdown bar (3px, yellow fill)
+- Swipe-active outline on `.grid--loadout.manual-active`
+- North marker `▴` on `.dpad-btn--up::after`
+- Landscape: 45vw cards (2×2) + 55vw D-pad; embedded cross `clamp(56px,14vw,84px)`
+- `.fab-dpad`: 56px circle, fixed bottom-right, yellow; hidden in `body--loadout-view`
+
+**`web/app.js`:**
+- `setStatus()`: icon-only (text arg ignored)
+- `initDpad()`: FAB wiring; auto-release slider with `sl_manual_timeout` localStorage
+- Auto-release: `_scheduleAutoRelease()`, `_cancelAutoRelease()`, `_tickCountdown()` (rAF countdown bar)
+- `dpadTap()`: auto-start on first tap; flashes both overlay + embedded buttons; calls `_scheduleAutoRelease()`
+- `_stopManualMode()`: shared cleanup helper (timer, fill, API stop, state reset)
+- `renderDpadSequence()` / `setDpadStatus()`: dual update (overlay + embedded)
+- `setDpadStatus()`: toggles `manual-active` on `#grid`
+- `renderGrid()`: toggles `body--loadout-view` on `document.body`
+- `initSwipe()`: `touchstart`/`touchend` on `#grid`; threshold 30px; swipe → `dpadTap()`
+
+### Result
+72 tests passing. Loadout view is now a self-contained gaming panel: 4 large cards + D-pad in one screen. All view shows FAB for overlay D-pad access.
 
 ---
 

@@ -105,6 +105,16 @@
 - [x] Venv check on startup — clear error message if venv not activated
 - [x] Flexible PanedWindow layout — draggable splitter, log fills on resize, min 800×500
 
+## Phase 10: Loadout D-pad Redesign ✅
+- [x] Step 1 — Header: signal-bars SVG icon + color dot; removed "Connected" text and ✛ button
+- [x] Step 2 — Loadout cards: 4×1 portrait grid, aspect-ratio 3/4, fill viewport on mobile; desktop 2-col override
+- [x] Step 3 — Embedded D-pad in loadout view: ldpad-topbar, countdown bar, timer row, status, dpad-cross-wrap
+- [x] Step 4 — Auto-start mechanics: first dpad tap auto-calls /api/manual/start; Execute button removed; auto-release from localStorage; countdown bar animation
+- [x] Step 5 — Swipe-to-input: touchstart/touchend on #grid; <30px = tap (execute); ≥30px = swipe → dpadTap(dir); dashed border when manual-active
+- [x] Step 6 — North marker (▴) on dpad-btn--up via CSS ::after; landscape loadout: 45vw cards (2×2) + 55vw dpad
+- [x] Step 7 — FAB button (✛, fixed bottom-right, yellow circle) opens D-pad overlay; hidden in loadout view
+- [x] 72 tests passing throughout all steps
+
 ## Blockers & Issues
 
 | Date | Issue | Status | Resolution |
