@@ -7,6 +7,24 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — QR Canvas Fix + Landscape Layout Fix
+
+**QR (`desktop/server_manager.py`):**
+- `QR_CANVAS_SIZE = 260` constant — canvas always created with explicit pixel size, no `winfo_width()` dependence
+- `_draw_qr(url)` — new method using `qr.modules` + `QR_CANVAS_SIZE // (side + 4)` for box size; catches all exceptions and shows error text in red
+- `_refresh_qr()` now only computes URL, calls `root.update_idletasks()` then `_draw_qr()`
+- Fixed-height `qr_frame` (`height=QR_CANVAS_SIZE+8`, `pack_propagate=False`) prevents QR being squished on window resize
+- Left panel: `width=420` + `pack_propagate(False)` — stable layout regardless of content
+- `WINDOW_MIN_W/H` updated to 1000×740
+
+**Landscape PWA (`web/style.css`):**
+- Cards panel: 40vw → 45vw; `min-width: 0` added (required for flex shrink)
+- Cards: `height:100%` → `min-height:0; height:auto; overflow:hidden` — cells shrink on short screens
+- Card icon/name scaled to cell width: `clamp(28px, calc(45vw/5), 48px)` / `clamp(0.5rem, calc(45vw/20), 0.72rem)`
+- D-pad area: `overflow:hidden` added
+- Timer row: `flex-shrink:1` — yields space to the cross when screen is short
+- `--cell` formula updated for S23 Ultra (915×412 dp): `clamp(48px, min(52vw/3.2, (100dvh-164px)/3), 82px)`
+
 ### 2026-03-17 — Phase 11: Keypress Debug & Fixes
 - `server/keypress.py`: `execute_stratagem()` now takes `key_hold` (default 40ms) — holds each key before releasing; `auto_click` (default False) — LMB click after Ctrl release for auto-throw; diagnostic `[KEYPRESS]` debug log lines with timestamps; updated default `ctrl_delay=0.1`, `key_delay=0.06`; `manual_key()` takes `key_hold` too; imports `pynput.mouse` in the try block
 - `server/config.py`: new fields `key_hold_ms=40`, `auto_click=False`; updated `key_delay_ms=60`, `ctrl_hold_delay_ms=100`; added `key_hold` property

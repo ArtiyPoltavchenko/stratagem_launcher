@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (Phase 12: server_manager bug fixes + landscape layout fix)
+> Last updated: 2026-03-17 (QR canvas fix + landscape layout fix)
 
 ---
 
@@ -246,6 +246,20 @@ Five bugs fixed in `desktop/server_manager.py`, one commit per bug.
 - Left panel minsize 380 → 400px
 - Removed accidental duplicate rows/cols/box calculation block that was introduced during a previous edit
 
+> ⚠️ Root cause confirmed and fully fixed in the subsequent QR Canvas Fix (see below).
+
+### QR Canvas Fix (follow-up, same session)
+
+Root cause: `winfo_width()` returns `1` before the first mainloop pass. The old code computed `box = canvas_size // matrix_size = 1 // 33 = 0` → rectangles of zero size → white canvas.
+
+Fix:
+- `QR_CANVAS_SIZE = 260` constant — canvas created with explicit pixel dimensions, layout never shrinks it
+- `_draw_qr(url)` method — uses `qr.modules` (not `get_matrix()`) and `QR_CANVAS_SIZE // (side + 4)` for box size; never reads `winfo_width()`; catches all exceptions with red error text fallback
+- `_refresh_qr()` now: computes URL → calls `root.update_idletasks()` → calls `_draw_qr(url)`
+- Fixed-height `qr_frame` (`pack_propagate=False`, `height=QR_CANVAS_SIZE+8`) prevents vertical squish
+- Left panel: `width=420` + `pack_propagate=False`
+- `WINDOW_MIN_W/H` updated to 1000×740
+
 ### Bug 2 — USB button had no action
 - Selecting "USB (ADB)" radio now shows `messagebox.showinfo` with setup instructions
 - After OK: launches `scripts\setup_usb.bat` in a new console via `subprocess.Popen(creationflags=CREATE_NEW_CONSOLE)`
@@ -347,6 +361,8 @@ Ties cross cell size to both available width (50vw / 3 columns) and available he
 | 2026-03-17 | Start/Stop produced no log | Added `_log()` helper; both actions now log to panel |
 | 2026-03-17 | Closing app with no server running caused unnecessary blocking call | `_on_close` checks `is_alive()` before calling `_stop()` |
 | 2026-03-17 | Landscape: D-pad cross overlapped slider; yellow outline exceeded viewport | Cancel btn moved out of topbar in HTML; `inset box-shadow` replaces `outline` |
+| 2026-03-17 | QR white square — `winfo_width()=1` before mainloop → box_size=0 | Fixed-size canvas (`QR_CANVAS_SIZE=260`), `_draw_qr()` method, `update_idletasks()` before draw |
+| 2026-03-17 | Landscape: cards/dpad overlapping, dpad off-screen on S23 Ultra | `min-width:0` on both panels, `height:auto` on cards, `--cell` from dvh, `overflow:hidden` on dpad |
 
 ---
 
