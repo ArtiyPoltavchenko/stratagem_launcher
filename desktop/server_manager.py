@@ -75,6 +75,16 @@ WINDOW_MIN_H    = 740
 WINDOW_INIT     = "1160x840"
 QR_IMG_SIZE  = 260
 
+PLATFORM_TOOLS_URL = (
+    "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+)
+PLATFORM_TOOLS_DIR = os.path.join(
+    os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+    "StratagramLauncher",
+    "platform-tools",
+)
+ADB_EXE = os.path.join(PLATFORM_TOOLS_DIR, "adb.exe")
+
 COLOR_RUN   = "#4caf50"
 COLOR_STOP  = "#f44336"
 COLOR_BG    = "#141414"
@@ -264,6 +274,28 @@ class ServerManagerApp:
         )
         # shown only in USB mode; hidden initially
 
+        adb_row = tk.Frame(sett, bg=COLOR_PANEL)
+        adb_row.pack(fill="x", padx=12, pady=(0, 4))
+        _adb_found = self._get_adb_path() is not None
+        self._btn_install_adb = tk.Button(
+            adb_row,
+            text="ADB ✓ Installed" if _adb_found else "Install ADB",
+            fg=COLOR_RUN if _adb_found else COLOR_FG,
+            bg=COLOR_CARD,
+            relief="flat",
+            font=F_SM,
+            state="disabled" if _adb_found else "normal",
+            cursor="hand2",
+            command=lambda: threading.Thread(
+                target=self._install_adb, daemon=True, name="adb-install",
+            ).start(),
+        )
+        self._btn_install_adb.pack(side="left", padx=(0, 8))
+        tk.Label(
+            adb_row, text="required for USB mode",
+            bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        ).pack(side="left")
+
         delay_row = tk.Frame(sett, bg=COLOR_PANEL)
         delay_row.pack(fill="x", padx=12, pady=(0, 12))
         tk.Label(
@@ -390,17 +422,92 @@ class ServerManagerApp:
                 "2. Enable USB Debugging on phone\n"
                 "3. Click OK to run ADB setup",
             )
-            logging.getLogger(__name__).info("[USB] Running ADB port forwarding...")
-            try:
-                subprocess.Popen(
-                    ["cmd", "/c", resource_path("scripts\\setup_usb.bat")],
-                    creationflags=subprocess.CREATE_NEW_CONSOLE,
-                )
-            except Exception as exc:
-                logging.getLogger(__name__).error("[USB] Failed to run setup_usb.bat: %s", exc)
+            self._setup_usb()
         else:
             self._usb_hint.pack_forget()
         self._refresh_qr()
+
+    # ── ADB helpers ────────────────────────────────────────────────────────
+
+    def _get_adb_path(self) -> str | None:
+        """Return path to adb.exe: local install first, then system PATH."""
+        if os.path.isfile(ADB_EXE):
+            return ADB_EXE
+        import shutil
+        return shutil.which("adb")
+
+    def _setup_usb(self) -> None:
+        """Run setup_usb.bat using the located adb.exe (via ADB_PATH env var)."""
+        adb = self._get_adb_path()
+        if not adb:
+            messagebox.showwarning(
+                "ADB Not Found",
+                "ADB is not installed.\nClick 'Install ADB' first.",
+            )
+            return
+        bat = resource_path("scripts\\setup_usb.bat")
+        env = os.environ.copy()
+        env["ADB_PATH"] = adb
+        try:
+            subprocess.Popen(
+                ["cmd.exe", "/c", bat],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                env=env,
+            )
+            self._log(f"[USB] Running ADB port forwarding (adb: {adb})...")
+        except Exception as exc:
+            logging.getLogger(__name__).error("[USB] Failed to run setup_usb.bat: %s", exc)
+
+    def _install_adb(self) -> None:
+        """Download and extract Android Platform Tools. Runs in a daemon thread."""
+        import urllib.request
+        import zipfile
+        import tempfile
+
+        self.root.after(0, lambda: self._btn_install_adb.config(
+            state="disabled", text="Downloading... 0%",
+        ))
+        self._log("Downloading Android Platform Tools (~10 MB)...")
+
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp:
+                tmp_path = tmp.name
+
+            def _reporthook(block_num: int, block_size: int, total_size: int) -> None:
+                if total_size > 0:
+                    pct = min(100, block_num * block_size * 100 // total_size)
+                    self.root.after(0, lambda p=pct: self._btn_install_adb.config(
+                        text=f"Downloading... {p}%",
+                    ))
+
+            urllib.request.urlretrieve(PLATFORM_TOOLS_URL, tmp_path, _reporthook)
+            self._log("Download complete. Extracting...")
+
+            os.makedirs(os.path.dirname(PLATFORM_TOOLS_DIR), exist_ok=True)
+            with zipfile.ZipFile(tmp_path, "r") as zf:
+                # Archive contains a platform-tools/ folder — extract to parent dir
+                zf.extractall(os.path.dirname(PLATFORM_TOOLS_DIR))
+
+            os.unlink(tmp_path)
+            self._log(f"ADB installed: {ADB_EXE}")
+            self.root.after(0, self._on_adb_installed)
+
+        except Exception as e:
+            self._log(f"[ERROR] ADB install failed: {e}")
+            self.root.after(0, lambda: self._btn_install_adb.config(
+                state="normal", text="Install ADB",
+            ))
+
+    def _on_adb_installed(self) -> None:
+        """Called on the main thread after successful ADB install."""
+        self._btn_install_adb.config(
+            text="ADB ✓ Installed", state="disabled", fg=COLOR_RUN,
+        )
+        messagebox.showinfo(
+            "ADB Ready",
+            f"Android Platform Tools installed.\nPath: {ADB_EXE}\n\n"
+            "Now connect USB cable and click 'Setup USB'.",
+        )
 
     def _refresh_qr(self) -> None:
         """Update URL labels and redraw QR for the current mode/port/IP."""
