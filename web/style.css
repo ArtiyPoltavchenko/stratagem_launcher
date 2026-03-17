@@ -282,8 +282,8 @@ body {
   font-size: 1.1rem;
 }
 
-/* Swipe-zone visual when manual mode is active */
-.grid--loadout.manual-active {
+/* Swipe-zone visual when manual mode is active (swipe zone is the D-pad area) */
+.loadout-dpad-area.manual-active {
   outline: 2px dashed var(--accent-yellow);
   outline-offset: 2px;
   border-radius: var(--border-radius);

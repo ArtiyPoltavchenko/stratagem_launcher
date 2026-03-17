@@ -809,32 +809,31 @@ function setDpadStatus(active) {
     el.classList.toggle('dpad-status--inactive', !active);
   }
   // Visual swipe-zone border: dashed when manual mode is on
-  const grid = document.getElementById('grid');
-  if (grid) grid.classList.toggle('manual-active', active);
+  const dpadArea = document.getElementById('loadout-dpad-area');
+  if (dpadArea) dpadArea.classList.toggle('manual-active', active);
 }
 
 function initSwipe() {
-  const grid = document.getElementById('grid');
+  // Swipe zone is the embedded D-pad area — tap dpad buttons OR swipe anywhere in the area
+  const dpadArea = document.getElementById('loadout-dpad-area');
+  if (!dpadArea) return;
 
-  grid.addEventListener('touchstart', e => {
+  dpadArea.addEventListener('touchstart', e => {
     const t = e.changedTouches[0];
     _swipeTouchStartX = t.clientX;
     _swipeTouchStartY = t.clientY;
   }, { passive: true });
 
-  grid.addEventListener('touchend', e => {
-    // Only intercept swipes in loadout view (not All view, not edit mode)
-    if (activeLoadoutId === null || editLoadoutId !== null) return;
-
+  dpadArea.addEventListener('touchend', e => {
     const t  = e.changedTouches[0];
     const dx = t.clientX - _swipeTouchStartX;
     const dy = t.clientY - _swipeTouchStartY;
 
     if (Math.abs(dx) < SWIPE_THRESHOLD && Math.abs(dy) < SWIPE_THRESHOLD) {
-      return; // small movement = tap, let click fire normally
+      return; // small movement = tap, let dpad button click fire normally
     }
 
-    e.preventDefault(); // block synthesized click
+    e.preventDefault(); // block synthesized click for swipe gesture
     const direction = Math.abs(dx) > Math.abs(dy)
       ? (dx > 0 ? 'right' : 'left')
       : (dy > 0 ? 'down' : 'up');
