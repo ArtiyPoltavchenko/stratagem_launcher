@@ -375,6 +375,49 @@ body {
 }
 .ldpad-cancel-btn:hover { color: var(--error); border-color: var(--error); }
 
+/* Countdown bar */
+.ldpad-countdown-bar {
+  width: 100%;
+  height: 3px;
+  background: #2a2a2a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ldpad-countdown-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-yellow);
+  border-radius: 2px;
+}
+
+/* Auto-release timer row */
+.ldpad-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 4px;
+}
+.ldpad-timer-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ldpad-timeout-slider {
+  flex: 1;
+  accent-color: var(--accent-yellow);
+  height: 4px;
+  cursor: pointer;
+}
+.ldpad-timer-value {
+  font-size: 0.7rem;
+  color: var(--accent-yellow);
+  width: 2.8em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 .ldpad-status {
   width: 100%;
   text-align: center;

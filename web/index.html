@@ -73,6 +73,17 @@
         <div class="ldpad-sequence" id="ldpad-sequence"></div>
         <button class="ldpad-cancel-btn" id="ldpad-cancel-btn" aria-label="Cancel sequence">✕ Cancel</button>
       </div>
+      <!-- Countdown bar: depletes over auto-release timeout -->
+      <div class="ldpad-countdown-bar">
+        <div class="ldpad-countdown-fill" id="ldpad-countdown-fill"></div>
+      </div>
+      <!-- Auto-release timer slider -->
+      <div class="ldpad-timer-row">
+        <span class="ldpad-timer-label">Auto-release:</span>
+        <input class="ldpad-timeout-slider" id="ldpad-timeout-slider"
+               type="range" min="1" max="5" step="0.5" value="3">
+        <span class="ldpad-timer-value" id="ldpad-timer-value">3.0s</span>
+      </div>
       <div class="ldpad-status dpad-status--inactive" id="ldpad-status">Tap an arrow to enter sequence</div>
       <div class="ldpad-cross-wrap">
         <div class="dpad-cross">
@@ -99,10 +110,7 @@
 
     <div class="dpad-status" id="dpad-status">Hold Ctrl active</div>
 
-    <!-- Portrait: cross at bottom, Execute button above -->
     <div class="dpad-body">
-      <button class="dpad-execute-btn" id="dpad-execute-btn">EXECUTE</button>
-
       <div class="dpad-cross" id="dpad-cross">
         <button class="dpad-btn dpad-btn--up"    data-dir="up">▲</button>
         <button class="dpad-btn dpad-btn--left"  data-dir="left">◀</button>

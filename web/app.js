@@ -646,16 +646,72 @@ function initSearch() {
 let dpadActive = false;
 let dpadSequence = [];
 
+// Auto-release timer state
+let _autoReleaseTimer = null;
+let _autoReleaseStart = null;
+let _autoReleaseDuration = 3000;
+let _countdownRaf = null;
+
+function getManualTimeout() {
+  const v = parseFloat(localStorage.getItem('sl_manual_timeout'));
+  return isNaN(v) ? 3.0 : Math.min(5.0, Math.max(1.0, v));
+}
+
+function _scheduleAutoRelease() {
+  _cancelAutoRelease();
+  const ms = getManualTimeout() * 1000;
+  _autoReleaseStart = Date.now();
+  _autoReleaseDuration = ms;
+  _tickCountdown();
+  _autoReleaseTimer = setTimeout(() => _stopManualMode(), ms);
+}
+
+function _cancelAutoRelease() {
+  if (_autoReleaseTimer !== null) { clearTimeout(_autoReleaseTimer); _autoReleaseTimer = null; }
+  if (_countdownRaf  !== null) { cancelAnimationFrame(_countdownRaf); _countdownRaf = null; }
+  _autoReleaseStart = null;
+}
+
+function _tickCountdown() {
+  const fill = document.getElementById('ldpad-countdown-fill');
+  if (!fill || _autoReleaseStart === null) return;
+  const fraction = Math.max(0, 1 - (Date.now() - _autoReleaseStart) / _autoReleaseDuration);
+  fill.style.width = `${fraction * 100}%`;
+  if (fraction > 0) _countdownRaf = requestAnimationFrame(_tickCountdown);
+}
+
+async function _stopManualMode() {
+  _cancelAutoRelease();
+  const fill = document.getElementById('ldpad-countdown-fill');
+  if (fill) fill.style.width = '0%';
+  await apiFetch('/api/manual/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+  dpadActive = false;
+  dpadSequence = [];
+  renderDpadSequence();
+  setDpadStatus(false);
+}
+
 function initDpad() {
-  // dpad-open-btn moved to FAB in loadout view (Step 7); guard until then
+  // dpad-open-btn moves to FAB in Step 7; guard until then
   const openBtn = document.getElementById('dpad-open-btn');
   if (openBtn) openBtn.addEventListener('click', openDpad);
   document.getElementById('dpad-close-btn').addEventListener('click', closeDpad);
-  document.getElementById('dpad-execute-btn').addEventListener('click', dpadExecute);
   document.getElementById('ldpad-cancel-btn').addEventListener('click', cancelInlineDpad);
 
   document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
     btn.addEventListener('click', () => dpadTap(btn.dataset.dir));
+  });
+
+  // Auto-release slider
+  const slider = document.getElementById('ldpad-timeout-slider');
+  const valLabel = document.getElementById('ldpad-timer-value');
+  const saved = getManualTimeout();
+  slider.value = saved;
+  valLabel.textContent = `${saved.toFixed(1)}s`;
+  slider.addEventListener('input', () => {
+    const v = parseFloat(slider.value);
+    localStorage.setItem('sl_manual_timeout', v);
+    valLabel.textContent = `${v.toFixed(1)}s`;
   });
 }
 
@@ -675,15 +731,8 @@ async function openDpad() {
 }
 
 async function closeDpad() {
-  await apiFetch('/api/manual/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
-  dpadActive = false;
-  dpadSequence = [];
-  setDpadStatus(false);
+  await _stopManualMode();
   document.getElementById('dpad-overlay').classList.add('hidden');
-}
-
-async function dpadExecute() {
-  await closeDpad();
 }
 
 async function dpadTap(direction) {
@@ -716,6 +765,7 @@ async function dpadTap(direction) {
     });
     dpadSequence.push(direction);
     renderDpadSequence();
+    _scheduleAutoRelease();
   } catch (err) {
     if (err.status === 409) {
       // Manual mode timed out server-side — reflect that in UI
@@ -754,11 +804,7 @@ function setDpadStatus(active) {
 }
 
 async function cancelInlineDpad() {
-  await apiFetch('/api/manual/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
-  dpadActive = false;
-  dpadSequence = [];
-  renderDpadSequence();
-  setDpadStatus(false);
+  await _stopManualMode();
 }
 
 // ------------------------------------------------------------------ boot
