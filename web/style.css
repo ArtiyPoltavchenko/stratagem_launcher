@@ -857,11 +857,25 @@ body {
   pointer-events: none;
 }
 
-.dpad-btn--up    { grid-column: 2; grid-row: 1; }
+.dpad-btn--up    { grid-column: 2; grid-row: 1; position: relative; }
 .dpad-btn--left  { grid-column: 1; grid-row: 2; }
 .dpad-btn--center{ grid-column: 2; grid-row: 2; }
 .dpad-btn--right { grid-column: 3; grid-row: 2; }
 .dpad-btn--down  { grid-column: 2; grid-row: 3; }
+
+/* North marker — tiny triangle on Up button so orientation is always clear */
+.dpad-btn--up::after {
+  content: "▴";
+  font-size: 8px;
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--accent-yellow);
+  opacity: 0.7;
+  pointer-events: none;
+  line-height: 1;
+}
 
 .dpad-btn:active,
 .dpad-btn--flash {
@@ -871,26 +885,63 @@ body {
   border-color: var(--accent-yellow);
 }
 
-/* Landscape: side-by-side layout */
+/* Overlay D-pad — landscape: just centre the cross (EXECUTE removed) */
 @media (orientation: landscape) {
   .dpad-body {
     flex-direction: row;
-    justify-content: space-evenly;
+    align-items: center;
+    justify-content: center;
     padding: 16px 32px;
-    gap: 40px;
   }
-
-  .dpad-execute-btn {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    padding: 48px 14px;
-    letter-spacing: 0.15em;
-  }
-
   .dpad-cross {
     grid-template-columns: repeat(3, 90px);
     grid-template-rows: repeat(3, 90px);
   }
+}
+
+/* Loadout view — landscape: cards left (45 vw) + D-pad right (55 vw) */
+@media (orientation: landscape) {
+  .body--loadout-view #game-area {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .body--loadout-view .grid-wrap {
+    flex-shrink: 0;
+    width: 45vw;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 2×2 grid fills the full height of grid-wrap */
+  .body--loadout-view .grid--loadout {
+    grid-template-columns: repeat(2, 1fr);
+    flex: 1;
+    min-height: 0;
+    /* Remove portrait constraints */
+    height: 100%;
+    grid-auto-rows: 1fr;
+  }
+  .body--loadout-view .grid--loadout .card {
+    aspect-ratio: unset;
+    min-height: unset;
+    height: 100%;
+  }
+
+  /* D-pad area takes remaining 55 vw */
+  .body--loadout-view .loadout-dpad-area {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Smaller cross cells in landscape (less vertical space) */
+  .ldpad-cross-wrap .dpad-cross {
+    --cell: clamp(56px, 14vw, 84px);
+    grid-template-columns: repeat(3, var(--cell));
+    grid-template-rows:    repeat(3, var(--cell));
+  }
+  .ldpad-cross-wrap .dpad-btn { font-size: clamp(1.1rem, 3.5vw, 1.6rem); }
 }
 
 /* ---------------------------------------------------------------- settings panel */
