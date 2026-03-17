@@ -148,9 +148,6 @@ class ServerThread(threading.Thread):
         try:
             app = create_app(self.cfg)
             self._srv = _make_server(self.cfg.host, self.cfg.port, app)
-            logging.getLogger(__name__).info(
-                "Server started on http://%s:%d", self.cfg.host, self.cfg.port
-            )
             self._srv.serve_forever()
         except Exception as exc:
             self.error = str(exc)
@@ -186,7 +183,6 @@ class ServerManagerApp:
         self._build_ui()
         self._attach_log_handler()
         self._set_running(False)
-        self._refresh_qr()
         self._poll_log()
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -423,6 +419,15 @@ class ServerManagerApp:
         # Local URL — always 127.0.0.1 (Windows 11: localhost → ::1 IPv6)
         self._local_url_var.set(f"http://127.0.0.1:{port}")
 
+        # QR is only useful once the server is running
+        server_running = self._server_thread is not None and self._server_thread.is_alive()
+        if not server_running:
+            self._qr_label.config(image="", text="Press Start to show QR",
+                                  fg=COLOR_DIM, font=F_SM)
+            self._qr_photo = None
+            self._qr_url_label.configure(text="")
+            return
+
         # Non-WiFi modes: clear QR image, show local URL
         if mode in ("local", "usb"):
             self._qr_label.config(image="", text="")
@@ -477,11 +482,19 @@ class ServerManagerApp:
             self._qr_photo = img            # keep reference — GC must not collect this
             self._qr_label.config(image=img, text="")
 
+        except ImportError:
+            self._qr_photo = None
+            self._qr_label.config(
+                image="",
+                text="qrcode not installed\npip install qrcode",
+                fg=COLOR_DIM,
+                font=F_SM,
+            )
         except Exception as e:
             self._qr_photo = None
             self._qr_label.config(
                 image="",
-                text=f"QR unavailable:\n{e}",
+                text=f"QR error:\n{e}",
                 fg="red",
                 font=("Consolas", 9),
             )
@@ -520,13 +533,13 @@ class ServerManagerApp:
             port=self._get_port(),
             key_delay_ms=self._delay_var.get(),
         )
-        self._refresh_qr()
         self._server_thread = ServerThread(self._cfg)
         self._server_thread.start()
         self._set_running(True)
         host = self._cfg.host
         port = self._cfg.port
         self._log(f"Server started on http://{host}:{port}")
+        self._refresh_qr()  # generate QR now that server + URL are both known
 
     def _stop(self, callback=None) -> None:
         """Shut down the server in a background thread to avoid blocking tkinter."""
@@ -565,11 +578,19 @@ class ServerManagerApp:
         logging.getLogger(__name__).info(msg)
 
     def _attach_log_handler(self) -> None:
-        handler = TkLogHandler(self._log_queue)
-        handler.setLevel(logging.INFO)
+        fmt = logging.Formatter("[%(asctime)s] %(message)s", datefmt="%H:%M:%S")
+
+        gui_handler = TkLogHandler(self._log_queue)
+        gui_handler.setLevel(logging.INFO)
+
+        con_handler = logging.StreamHandler(sys.stdout)
+        con_handler.setLevel(logging.INFO)
+        con_handler.setFormatter(fmt)
+
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-        root_logger.addHandler(handler)
+        root_logger.addHandler(gui_handler)
+        root_logger.addHandler(con_handler)
         logging.getLogger("werkzeug").setLevel(logging.INFO)
 
     def _poll_log(self) -> None:
