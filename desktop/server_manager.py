@@ -69,8 +69,8 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------- constants
 
 WINDOW_TITLE = "Stratagem Launcher — Server Manager"
-WINDOW_MIN_W = 980
-WINDOW_MIN_H = 720
+WINDOW_MIN_W = 800
+WINDOW_MIN_H = 500
 WINDOW_INIT  = "1160x840"
 
 COLOR_RUN   = "#4caf50"
@@ -209,51 +209,37 @@ class ServerManagerApp:
         )
         self._status_lbl.pack(side="left", padx=(6, 0))
 
-        # ── Main content: left panel + right log ───────────────────────────
-        content = tk.Frame(self.root, bg=COLOR_BG)
-        content.pack(fill="both", expand=True, padx=12, pady=10)
-
-        left = tk.Frame(content, bg=COLOR_BG, width=430)
-        left.pack(side="left", fill="y", padx=(0, 10))
-        left.pack_propagate(False)
-
-        right = tk.Frame(content, bg=COLOR_BG)
-        right.pack(side="left", fill="both", expand=True)
-
-        # ── Connection panel ───────────────────────────────────────────────
-        conn = self._make_panel(left, " Connection ")
-        conn.pack(fill="x", pady=(0, 10))
-
-        self._wifi_url_var = tk.StringVar(value="—")
-        self._local_url_var = tk.StringVar(value="http://127.0.0.1:5000")
-
-        self._url_row(conn, "WiFi:", self._wifi_url_var, self._copy_wifi)
-        self._url_row(conn, "Local:", self._local_url_var, self._copy_local)
-
-        port_row = tk.Frame(conn, bg=COLOR_PANEL)
-        port_row.pack(fill="x", padx=12, pady=(4, 8))
-        tk.Label(
-            port_row, text="Port:", bg=COLOR_PANEL, fg=COLOR_DIM,
-            font=F_BASE, width=6, anchor="w",
-        ).pack(side="left")
-        tk.Entry(
-            port_row, textvariable=self._port_var, width=7,
-            bg=COLOR_BG, fg=COLOR_FG, insertbackground=COLOR_FG,
-            relief="flat", font=F_BASE,
-        ).pack(side="left")
-        self._port_var.trace_add("write", lambda *_: self.root.after(200, self._refresh_qr))
-
-        # QR code area
-        self._qr_hint = tk.Label(
-            conn, text="", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        # ── Main content: draggable PanedWindow ────────────────────────────
+        paned = tk.PanedWindow(
+            self.root, orient=tk.HORIZONTAL, sashwidth=6,
+            bg="#444", sashrelief=tk.RAISED,
         )
-        self._qr_hint.pack()
-        self._qr_label = tk.Label(conn, bg=COLOR_PANEL, cursor="arrow")
-        self._qr_label.pack(pady=(0, 12))
+        paned.pack(fill="both", expand=True, padx=8, pady=(6, 8))
 
-        # ── Settings panel ─────────────────────────────────────────────────
+        left = tk.Frame(paned, bg=COLOR_BG)
+        paned.add(left, minsize=380, stretch="never")
+
+        right = tk.Frame(paned, bg=COLOR_BG)
+        paned.add(right, minsize=300, stretch="always")
+
+        # ── LEFT panel: bottom-up packing so QR fills remaining space ──────
+
+        # Control buttons — bottom
+        ctrl = tk.Frame(left, bg=COLOR_BG)
+        ctrl.pack(side="bottom", fill="x", padx=4, pady=(0, 6))
+
+        self._start_btn = self._make_btn(ctrl, "▶  Start",   self._start,   bg="#2b4a2b")
+        self._start_btn.pack(side="left", padx=(0, 8))
+
+        self._stop_btn = self._make_btn(ctrl, "■  Stop",    self._stop,    bg="#4a2b2b")
+        self._stop_btn.pack(side="left", padx=(0, 8))
+
+        self._restart_btn = self._make_btn(ctrl, "↻  Restart", self._restart, bg=COLOR_CARD)
+        self._restart_btn.pack(side="left")
+
+        # Settings panel — above buttons (also bottom)
         sett = self._make_panel(left, " Settings ")
-        sett.pack(fill="x", pady=(0, 10))
+        sett.pack(side="bottom", fill="x", padx=4, pady=(0, 10))
 
         mode_row = tk.Frame(sett, bg=COLOR_PANEL)
         mode_row.pack(fill="x", padx=12, pady=(10, 4))
@@ -296,22 +282,43 @@ class ServerManagerApp:
             highlightthickness=0, command=self._on_delay_change,
         ).pack(side="left", fill="x", expand=True)
 
-        # ── Control buttons ────────────────────────────────────────────────
-        ctrl = tk.Frame(left, bg=COLOR_BG)
-        ctrl.pack(fill="x", pady=(0, 6))
+        # Connection panel — top
+        conn = self._make_panel(left, " Connection ")
+        conn.pack(side="top", fill="x", padx=4, pady=(4, 0))
 
-        self._start_btn = self._make_btn(ctrl, "▶  Start",   self._start,   bg="#2b4a2b")
-        self._start_btn.pack(side="left", padx=(0, 8))
+        self._wifi_url_var = tk.StringVar(value="—")
+        self._local_url_var = tk.StringVar(value="http://127.0.0.1:5000")
 
-        self._stop_btn = self._make_btn(ctrl, "■  Stop",    self._stop,    bg="#4a2b2b")
-        self._stop_btn.pack(side="left", padx=(0, 8))
+        self._url_row(conn, "WiFi:", self._wifi_url_var, self._copy_wifi)
+        self._url_row(conn, "Local:", self._local_url_var, self._copy_local)
 
-        self._restart_btn = self._make_btn(ctrl, "↻  Restart", self._restart, bg=COLOR_CARD)
-        self._restart_btn.pack(side="left")
+        port_row = tk.Frame(conn, bg=COLOR_PANEL)
+        port_row.pack(fill="x", padx=12, pady=(4, 8))
+        tk.Label(
+            port_row, text="Port:", bg=COLOR_PANEL, fg=COLOR_DIM,
+            font=F_BASE, width=6, anchor="w",
+        ).pack(side="left")
+        tk.Entry(
+            port_row, textvariable=self._port_var, width=7,
+            bg=COLOR_BG, fg=COLOR_FG, insertbackground=COLOR_FG,
+            relief="flat", font=F_BASE,
+        ).pack(side="left")
+        self._port_var.trace_add("write", lambda *_: self.root.after(200, self._refresh_qr))
 
-        # ── Log viewer ─────────────────────────────────────────────────────
+        # QR area — fills remaining space between Connection (top) and Settings (bottom)
+        qr_frame = tk.Frame(left, bg=COLOR_PANEL, bd=1, relief="solid")
+        qr_frame.pack(fill="both", expand=True, padx=4, pady=8)
+
+        self._qr_hint = tk.Label(
+            qr_frame, text="", bg=COLOR_PANEL, fg=COLOR_DIM, font=F_SM,
+        )
+        self._qr_hint.pack(pady=(8, 2))
+        self._qr_label = tk.Label(qr_frame, bg=COLOR_PANEL, cursor="arrow")
+        self._qr_label.pack(expand=True)
+
+        # ── Log viewer — fills entire right pane ───────────────────────────
         log_frame = self._make_panel(right, " Log ")
-        log_frame.pack(fill="both", expand=True)
+        log_frame.pack(fill="both", expand=True, padx=4, pady=4)
 
         self._log_text = scrolledtext.ScrolledText(
             log_frame, state="disabled",
