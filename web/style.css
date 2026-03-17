@@ -678,6 +678,32 @@ body {
   font-size: 0.875rem;
 }
 
+/* ---------------------------------------------------------------- FAB */
+
+.fab-dpad {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-yellow);
+  color: #000;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.fab-dpad:active { transform: scale(0.92); }
+
+/* Hide FAB in loadout view (D-pad is embedded there) */
+.body--loadout-view .fab-dpad { display: none; }
+
 /* ---------------------------------------------------------------- toast */
 
 .toast-container {

@@ -696,9 +696,8 @@ async function _stopManualMode() {
 }
 
 function initDpad() {
-  // dpad-open-btn moves to FAB in Step 7; guard until then
-  const openBtn = document.getElementById('dpad-open-btn');
-  if (openBtn) openBtn.addEventListener('click', openDpad);
+  const fabBtn = document.getElementById('fab-dpad');
+  if (fabBtn) fabBtn.addEventListener('click', openDpad);
   document.getElementById('dpad-close-btn').addEventListener('click', closeDpad);
   document.getElementById('ldpad-cancel-btn').addEventListener('click', cancelInlineDpad);
 
