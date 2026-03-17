@@ -405,30 +405,96 @@ function makeCard(s, inEditMode = false) {
   return card;
 }
 
-function resolveIconUrl(s) {
-  if (!s.icon) return null;
-  // If icon_repo is set, build full GitHub raw URL
-  if (iconRepo) {
+async function resolveIconUrl(s, repo) {
+  // If JSON has a non-empty icon path — use it directly (onerror handles 404)
+  if (s.icon) {
     const encoded = s.icon.split('/').map(encodeURIComponent).join('/');
-    return `${iconRepo}/${encoded}`;
+    return `${repo}/${encoded}`;
   }
-  // Fallback: treat as local path served by Flask
-  return s.icon;
+
+  // Empty icon — probe candidates with HEAD requests
+  const candidates = buildIconCandidates(s, repo);
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      if (res.ok) return url;
+    } catch (_) {
+      // network error — try next
+    }
+  }
+  return null;
+}
+
+function buildIconCandidates(s, repo) {
+  const folderMap = {
+    orbital:   'Bridge',
+    eagle:     'Hangar',
+    support:   'Patriotic Administration Center',
+    backpack:  'Patriotic Administration Center',
+    defensive: 'Engineering Bay',
+    vehicle:   'Robotics Workshop',
+  };
+
+  const knownFolders = {
+    'Gatling Sentry':           'Robotics Workshop',
+    'Machine Gun Sentry':       'Robotics Workshop',
+    'Autocannon Sentry':        'Robotics Workshop',
+    'Rocket Sentry':            'Robotics Workshop',
+    'Mortar Sentry':            'Robotics Workshop',
+    'EMS Mortar Sentry':        'Robotics Workshop',
+    'Tesla Tower':              'Robotics Workshop',
+    'Flame Sentry':             'Robotics Workshop',
+    'Gas Mortar Sentry':        'Robotics Workshop',
+    'Grenadier Battlement':     'Robotics Workshop',
+    'Shield Generator Relay':   'Engineering Bay',
+    'HMG Emplacement':          'Engineering Bay',
+    'Anti-Tank Emplacement':    'Engineering Bay',
+    'Anti-Personnel Minefield': 'Engineering Bay',
+    'Anti-Tank Mines':          'Engineering Bay',
+    'Incendiary Mines':         'Engineering Bay',
+    'Gas Mines':                'Engineering Bay',
+    'Patriot Exosuit':          'Patriotic Administration Center',
+    'Emancipator Exosuit':      'Patriotic Administration Center',
+    'Fast Recon Vehicle':       'Patriotic Administration Center',
+    'Bastion MK XVI':           'Patriotic Administration Center',
+  };
+
+  // Strip weapon designation prefix to get bare name (e.g. "AC-8 Autocannon" → "Autocannon")
+  const baseName = s.name
+    .replace(/^(A\/|E\/|AX\/AR-23 |AX\/LAS-5 |AX\/ARC-3 |AX\/TX-13 |AX\/FLAM-75 |A\/M-\d+ |A\/MG-\d+ |A\/G-\d+ |A\/MLS-\d+ |A\/AC-\d+ |A\/ARC-\d+ |E\/MG-\d+ |E\/AT-\d+ |E\/GL-\d+ |E\/FLAM-\d+ |FX-\d+ |\w+-\w+ )/i, '')
+    .trim();
+
+  const folder = knownFolders[s.name] ?? knownFolders[baseName] ?? folderMap[s.category] ?? 'Patriotic Administration Center';
+  const enc = str => encodeURIComponent(str);
+
+  return [
+    `${repo}/${enc(folder)}/${enc(s.name)}.svg`,
+    `${repo}/${enc(folder)}/${enc(baseName)}.svg`,
+    `${repo}/Bridge/${enc(s.name)}.svg`,
+    `${repo}/Hangar/${enc(s.name)}.svg`,
+    `${repo}/Patriotic%20Administration%20Center/${enc(s.name)}.svg`,
+    `${repo}/Engineering%20Bay/${enc(s.name)}.svg`,
+    `${repo}/Robotics%20Workshop/${enc(s.name)}.svg`,
+  ];
 }
 
 function makeFallbackIcon(s, color) {
+  // Render letter immediately; swap in real icon asynchronously
   const svg = buildLetterSvg(s.name[0], color);
-  const url = resolveIconUrl(s);
-  if (!url) return svg;
 
-  const img = new Image();
-  img.width = 36;
-  img.height = 36;
-  img.alt = '';
-  img.style.cssText = 'width:36px;height:36px;object-fit:contain';
-  img.onerror = () => img.replaceWith(svg);
-  img.src = url;
-  return img;
+  resolveIconUrl(s, iconRepo).then(url => {
+    if (!url) return; // no icon found — keep letter
+    const img = new Image();
+    img.width = 36;
+    img.height = 36;
+    img.alt = '';
+    img.style.cssText = 'width:36px;height:36px;object-fit:contain';
+    img.onerror = () => img.replaceWith(buildLetterSvg(s.name[0], color));
+    img.src = url;
+    svg.replaceWith(img);
+  });
+
+  return svg;
 }
 
 function buildLetterSvg(letter, color) {
@@ -746,15 +812,17 @@ async function closeDpad() {
 async function dpadTap(direction) {
   // Auto-start: first tap holds Ctrl automatically (no explicit Start button)
   if (!dpadActive) {
+    dpadActive = true; // set optimistically to prevent race on rapid taps
+    dpadSequence = [];
     try {
       await apiFetch('/api/manual/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      dpadActive = true;
-      dpadSequence = [];
       setDpadStatus(true);
     } catch {
+      dpadActive = false;
       showToast('Cannot start manual mode — check connection', 'error');
       return;
     }
+    _scheduleAutoRelease();
   }
 
   if (navigator.vibrate) navigator.vibrate(30);

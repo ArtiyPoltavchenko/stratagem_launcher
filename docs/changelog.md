@@ -7,6 +7,14 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Fix: Icon HEAD-check, D-pad 409, README count
+
+- `web/app.js`: `resolveIconUrl` is now `async` — for stratagems with `"icon": ""`, probes candidate URLs via `fetch({method:'HEAD'})` across Bridge/Hangar/PAC/Engineering Bay/Robotics Workshop folders; returns first 200 OK or null
+- `web/app.js`: added `buildIconCandidates()` with per-stratagem `knownFolders` map and prefix-strip logic to find bare name (e.g. "AC-8 Autocannon" → "Autocannon")
+- `web/app.js`: `makeFallbackIcon()` now renders letter icon immediately, then async-swaps in real icon when `resolveIconUrl` resolves
+- `web/app.js`: `dpadTap()` — set `dpadActive = true` optimistically before `await apiFetch('/api/manual/start')` to prevent race condition where two rapid taps both send `/start`, causing 409 on the `/key` call
+- `README.md`: already correct ("Browse all stratagems" — no hard-coded count)
+
 ### 2026-03-17 — Data: Full Stratagem List (DLC + Warbonds)
 
 - `data/stratagems.json`: expanded from 59 to 82 stratagems across 6 categories
