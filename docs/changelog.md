@@ -7,6 +7,14 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Fix: stratagems.json — all icon paths filled
+
+- `data/stratagems.json`: filled icon paths for 23 stratagems (airburst_rocket_launcher, wasp_launcher, de_escalator, sterilizer, one_true_flag, solo_silo, expendable_napalm, speargun, maxigun, epoch, guard_dog_dog_breath, guard_dog_k9, portable_hellbomb, directional_shield, hover_pack, warp_pack, hot_dog, flame_sentry, anti_tank_emplacement, grenadier_battlement, anti_tank_mines, gas_mines, emancipator_exosuit, fast_recon_vehicle)
+- Fixed warbonds: `flame_sentry` Freedom's Flame → Urban Legends; `de_escalator` Urban Legends → Force of Law; `warp_pack` Borderline Justice → Control Group
+- Added 2 new stratagems: `laser_sentry` (Control Group, defensive) and `defoliation_tool` (Python Commandos, support)
+- 6 stratagems intentionally remain `"icon": ""` (no entry in nvigneux repo): leveller, belt_fed_grenade_launcher, cremator, c4_pack, gas_mortar_sentry, bastion
+- Total: 84 stratagems, 82 tests passing
+
 ### 2026-03-17 — Fix: Icon HEAD-check, D-pad 409, README count
 
 - `web/app.js`: `resolveIconUrl` is now `async` — for stratagems with `"icon": ""`, probes candidate URLs via `fetch({method:'HEAD'})` across Bridge/Hangar/PAC/Engineering Bay/Robotics Workshop folders; returns first 200 OK or null

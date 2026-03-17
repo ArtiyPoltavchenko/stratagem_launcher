@@ -340,7 +340,7 @@
       "name": "RL-77 Airburst Rocket Launcher",
       "keys": ["down", "up", "up", "left", "right"],
       "category": "support",
-      "icon": "",
+      "icon": "Patriotic Administration Center/Airburst Rocket Launcher.svg",
       "cooldown": 480,
       "verified": true
     },
@@ -349,7 +349,7 @@
       "name": "StA-X3 W.A.S.P. Launcher",
       "keys": ["down", "down", "up", "down", "right"],
       "category": "support",
-      "icon": "",
+      "icon": "Patriotic Administration Center/StA-X3 W.A.S.P. Launcher.svg",
       "cooldown": 432,
       "verified": true,
       "warbond": "Truth Enforcers"
@@ -359,17 +359,17 @@
       "name": "GL-52 De-Escalator",
       "keys": ["down", "right", "up", "left", "right"],
       "category": "support",
-      "icon": "",
+      "icon": "Force of Law/GL-52 De-Escalator.svg",
       "cooldown": 480,
       "verified": true,
-      "warbond": "Urban Legends"
+      "warbond": "Force of Law"
     },
     {
       "id": "sterilizer",
       "name": "TX-41 Sterilizer",
       "keys": ["down", "left", "up", "down", "left"],
       "category": "support",
-      "icon": "",
+      "icon": "Chemical Agents/Sterilizer.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Chemical Agents"
@@ -379,7 +379,7 @@
       "name": "CQC-1 One True Flag",
       "keys": ["down", "left", "right", "right", "up"],
       "category": "support",
-      "icon": "",
+      "icon": "Masters of Ceremony/One True Flag.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Servants of Freedom"
@@ -389,7 +389,7 @@
       "name": "MS-11 Solo Silo",
       "keys": ["down", "up", "right", "down", "down"],
       "category": "support",
-      "icon": "",
+      "icon": "Dust Devils/Solo Silo.svg",
       "cooldown": 180,
       "uses": 1,
       "verified": true,
@@ -400,7 +400,7 @@
       "name": "EAT-700 Expendable Napalm",
       "keys": ["down", "down", "left", "up", "left"],
       "category": "support",
-      "icon": "",
+      "icon": "Dust Devils/Expendable Napalm.svg",
       "cooldown": 70,
       "verified": false,
       "warbond": "Dust Devils"
@@ -410,7 +410,7 @@
       "name": "S-11 Speargun",
       "keys": ["down", "right", "down", "left", "up", "right"],
       "category": "support",
-      "icon": "",
+      "icon": "Dust Devils/Speargun.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Dust Devils"
@@ -420,7 +420,7 @@
       "name": "M-1000 Maxigun",
       "keys": ["down", "left", "down", "up", "right", "right"],
       "category": "support",
-      "icon": "",
+      "icon": "Python Commandos/Maxigun.svg",
       "cooldown": 480,
       "verified": false,
       "warbond": "Python Commandos"
@@ -430,10 +430,30 @@
       "name": "PLAS-45 Epoch",
       "keys": ["down", "right", "down", "up", "right", "left"],
       "category": "support",
-      "icon": "",
+      "icon": "Control Group/Epoch.svg",
       "cooldown": 480,
       "verified": false,
       "warbond": "Control Group"
+    },
+    {
+      "id": "laser_sentry",
+      "name": "A/FLAM-40 Laser Sentry",
+      "keys": ["down", "up", "right", "down", "up", "up"],
+      "category": "defensive",
+      "icon": "Control Group/Laser Sentry.svg",
+      "cooldown": 150,
+      "verified": false,
+      "warbond": "Control Group"
+    },
+    {
+      "id": "defoliation_tool",
+      "name": "CQC-9 Defoliation Tool",
+      "keys": ["down", "left", "down", "up", "down"],
+      "category": "support",
+      "icon": "Python Commandos/Defoliation Tool.svg",
+      "cooldown": 480,
+      "verified": false,
+      "warbond": "Python Commandos"
     },
     {
       "id": "leveller",
@@ -525,7 +545,7 @@
       "name": "AX/TX-13 Guard Dog Dog Breath",
       "keys": ["down", "up", "left", "up", "right", "up"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Chemical Agents/Guard Dog Breath.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Chemical Agents"
@@ -535,7 +555,7 @@
       "name": "AX/ARC-3 Guard Dog K-9",
       "keys": ["down", "up", "left", "up", "right", "left"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Force of Law/Guard Dog K-9.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Cutting Edge"
@@ -545,7 +565,7 @@
       "name": "B-100 Portable Hellbomb",
       "keys": ["down", "right", "up", "up", "up"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Servants of Freedom/Hellbomb Portable.svg",
       "cooldown": 300,
       "verified": true,
       "warbond": "Democratic Detonation"
@@ -555,7 +575,7 @@
       "name": "SH-51 Directional Shield Backpack",
       "keys": ["down", "up", "left", "right", "up", "up"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Urban Legends/Directional Shield.svg",
       "cooldown": 300,
       "verified": true,
       "warbond": "Viper Commandos"
@@ -565,7 +585,7 @@
       "name": "LIFT-860 Hover Pack",
       "keys": ["down", "up", "up", "down", "left", "right"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Borderline Justice/Hover Pack.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Servants of Freedom"
@@ -575,17 +595,17 @@
       "name": "LIFT-182 Warp Pack",
       "keys": ["down", "up", "up", "down", "right", "left"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Control Group/Warp Pack.svg",
       "cooldown": 480,
       "verified": false,
-      "warbond": "Borderline Justice"
+      "warbond": "Control Group"
     },
     {
       "id": "hot_dog",
       "name": "AX/FLAM-75 Hot Dog",
       "keys": ["down", "up", "left", "up", "right", "right"],
       "category": "backpack",
-      "icon": "",
+      "icon": "Python Commandos/Guard Dog Hot Dog.svg",
       "cooldown": 480,
       "verified": false,
       "warbond": "Freedom's Flame"
@@ -669,10 +689,10 @@
       "name": "E/FLAM-40 Flame Sentry",
       "keys": ["down", "up", "right", "down", "up", "up"],
       "category": "defensive",
-      "icon": "",
+      "icon": "Urban Legends/Flame Sentry.svg",
       "cooldown": 150,
       "verified": true,
-      "warbond": "Freedom's Flame"
+      "warbond": "Urban Legends"
     },
     {
       "id": "shield_generator_relay",
@@ -697,7 +717,7 @@
       "name": "E/AT-12 Anti-Tank Emplacement",
       "keys": ["down", "up", "left", "right", "right", "right"],
       "category": "defensive",
-      "icon": "",
+      "icon": "Urban Legends/Anti-Tank Emplacement.svg",
       "cooldown": 180,
       "verified": true,
       "warbond": "Urban Legends"
@@ -707,7 +727,7 @@
       "name": "E/GL-21 Grenadier Battlement",
       "keys": ["down", "right", "down", "left", "right"],
       "category": "defensive",
-      "icon": "",
+      "icon": "Bridge/Grenadier Battlement.svg",
       "cooldown": 180,
       "verified": true,
       "warbond": "Obedient Democracy Support Troopers"
@@ -726,7 +746,7 @@
       "name": "MD-17 Anti-Tank Mines",
       "keys": ["down", "left", "up", "up"],
       "category": "defensive",
-      "icon": "",
+      "icon": "Engineering Bay/Anti-Tank Mines.svg",
       "cooldown": 180,
       "verified": true
     },
@@ -744,7 +764,7 @@
       "name": "MD-8 Gas Mines",
       "keys": ["down", "left", "left", "right"],
       "category": "defensive",
-      "icon": "",
+      "icon": "Engineering Bay/Gas Mine.svg",
       "cooldown": 180,
       "verified": true,
       "warbond": "Chemical Agents"
@@ -775,7 +795,7 @@
       "name": "EXO-49 Emancipator Exosuit",
       "keys": ["left", "down", "right", "up", "left", "down", "up"],
       "category": "vehicle",
-      "icon": "",
+      "icon": "Robotics Workshop/Emancipator Exosuit.svg",
       "cooldown": 600,
       "uses": 3,
       "verified": true,
@@ -786,7 +806,7 @@
       "name": "M-102 Fast Recon Vehicle",
       "keys": ["left", "down", "right", "down", "right", "down", "up"],
       "category": "vehicle",
-      "icon": "",
+      "icon": "Hangar/Fast Recon Vehicle.svg",
       "cooldown": 480,
       "verified": true,
       "warbond": "Servants of Freedom"
