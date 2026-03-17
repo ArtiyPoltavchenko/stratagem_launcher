@@ -115,6 +115,19 @@
 - [x] Step 7 — FAB button (✛, fixed bottom-right, yellow circle) opens D-pad overlay; hidden in loadout view
 - [x] 72 tests passing throughout all steps
 
+## Phase 11: Keypress Debug & Fixes ✅
+- [x] `server/keypress.py`: added `key_hold` param (default 40ms) — press→hold→release per key
+- [x] `server/keypress.py`: added `auto_click` param — optional LMB click after Ctrl release (auto-throw)
+- [x] `server/keypress.py`: diagnostic `[KEYPRESS]` log lines with timestamps for every key event
+- [x] `server/keypress.py`: updated defaults — `ctrl_delay=100ms` (was 30ms), `key_delay=60ms` (was 50ms)
+- [x] `server/config.py`: added `key_hold_ms=40`, `auto_click=False`; updated default delays
+- [x] `server/app.py`: passes `key_hold`/`auto_click` from config to `execute_stratagem` and `manual_key`
+- [x] `server/app.py`: `POST /api/settings` now accepts `key_hold_ms` and `auto_click`; emits `[SETTINGS]` log lines
+- [x] `web/index.html`: "Auto-throw after input" checkbox in Settings panel
+- [x] `web/app.js`: settings toast shows "✓" on success, "server unreachable" hint on catch; saves/sends `auto_click`
+- [x] Bug 2 (sequence not clearing): already fixed in Phase 10 via `_stopManualMode()` — no changes needed
+- [x] 82 tests passing (10 new)
+
 ## Blockers & Issues
 
 | Date | Issue | Status | Resolution |

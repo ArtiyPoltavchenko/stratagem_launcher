@@ -7,6 +7,15 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-17 — Phase 11: Keypress Debug & Fixes
+- `server/keypress.py`: `execute_stratagem()` now takes `key_hold` (default 40ms) — holds each key before releasing; `auto_click` (default False) — LMB click after Ctrl release for auto-throw; diagnostic `[KEYPRESS]` debug log lines with timestamps; updated default `ctrl_delay=0.1`, `key_delay=0.06`; `manual_key()` takes `key_hold` too; imports `pynput.mouse` in the try block
+- `server/config.py`: new fields `key_hold_ms=40`, `auto_click=False`; updated `key_delay_ms=60`, `ctrl_hold_delay_ms=100`; added `key_hold` property
+- `server/app.py`: passes `key_hold`/`auto_click` to `execute_stratagem` and `manual_key`; `POST /api/settings` accepts `key_hold_ms`/`auto_click`, logs `[SETTINGS] Received` and `[SETTINGS] Applied`; `GET /api/settings` returns `key_hold_ms`/`auto_click`
+- `web/index.html`: "Auto-throw after input (LMB click)" checkbox in Settings panel
+- `web/app.js`: apply button shows "Settings saved ✓" on success, "server unreachable" hint if fetch fails; saves/reads `autoClick` from localStorage; sends `auto_click` in POST
+- `tests/test_keypress.py`: 3 new tests — key_hold between press/release, key_delay after release, manual_key hold timing
+- `tests/test_api.py`: 7 new tests — key_hold_ms GET/POST/persist, auto_click GET/POST, settings logging
+
 ### 2026-03-17 — Phase 10: Loadout D-pad Redesign
 - `web/index.html`: header — removed `#status-text`, `#dpad-open-btn`; added inline SVG signal-bars icon; embedded D-pad (`#loadout-dpad-area`) with topbar/countdown/timer/status/cross; removed `dpad-execute-btn` from overlay; added FAB `#fab-dpad`
 - `web/style.css`: `.signal-icon` (16×12 SVG); CSS `:has()` signal colouring; `body--loadout-view` full-viewport flex layout; `.grid--loadout` 4×1 portrait + 2×2 landscape; embedded cross `clamp(72px,26vw,110px)`; ldpad countdown bar; swipe active outline; north marker `::after` on `.dpad-btn--up`; landscape loadout media query (45vw/55vw split); FAB `.fab-dpad` (56px circle, fixed bottom-right); FAB hidden in loadout view

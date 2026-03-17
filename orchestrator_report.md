@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (Phase 10: Loadout D-pad Redesign complete)
+> Last updated: 2026-03-17 (Phase 11: Keypress debug & fixes complete)
 
 ---
 
@@ -200,6 +200,36 @@ Four bugs found during real-world exe testing and fixed:
 
 #### Bug 5: Window too small, text unreadable
 - **Fix**: All fonts scaled ~1.5×: base 9→13pt, bold 10→14pt, mono 8→11pt, status dot 14→20pt. Default window size 960×700 → 1160×840; minimum 800×620 → 980×720; left panel 330 → 430px.
+
+---
+
+## Phase 11: Keypress Debug & Fixes (2026-03-17)
+
+Root cause: press+release was instantaneous (no hold time), Ctrl delay was 30ms (too short). Helldivers 2 requires a minimum key hold duration to register directional inputs.
+
+### Changes
+
+**`server/config.py`:** `key_hold_ms=40` (new), `auto_click=False` (new); `key_delay_ms` 50→60, `ctrl_hold_delay_ms` 30→100; `key_hold` property added.
+
+**`server/keypress.py`:**
+- `execute_stratagem(key_hold=0.04, auto_click=False)` — holds each key for `key_hold` seconds before releasing; optional LMB click after Ctrl release for auto-throw
+- `manual_key(key_hold=0.04)` — same hold applied to manual input
+- Diagnostic `[KEYPRESS]` debug log lines with `time.time()` timestamps
+- `pynput.mouse` imported in the same try block as pynput.keyboard
+
+**`server/app.py`:** passes `key_hold`/`auto_click` from config; `POST /api/settings` accepts `key_hold_ms`/`auto_click`, logs `[SETTINGS] Received/Applied`; `GET /api/settings` returns new fields.
+
+**`web/index.html`:** "Auto-throw after input (LMB click)" checkbox.
+
+**`web/app.js`:** Settings apply shows "✓" toast on success, "server unreachable" on error; saves/sends `auto_click`.
+
+### Timing model (Helldivers 2 recommended)
+```
+Ctrl DOWN → [ctrl_delay 100ms] → key DOWN → [key_hold 40ms] → key UP → [key_delay 60ms] → next key …
+```
+
+### Result
+82 tests passing (10 new). Note on Bug 2: sequence not clearing after timeout was already fixed in Phase 10 via `_stopManualMode()` client-side timer.
 
 ---
 
