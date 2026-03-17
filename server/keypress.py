@@ -102,14 +102,14 @@ def manual_start(ctrl_delay: float = 0.03, timeout: float = _MANUAL_TIMEOUT_DEFA
 def manual_key(
     direction: str,
     timeout: float = _MANUAL_TIMEOUT_DEFAULT,
-    key_hold: float = 0.04,
+    key_hold: float = 0.05,
 ) -> bool:
     """Press one directional key while Ctrl is held. Resets inactivity timer.
 
     Args:
         direction: One of "up", "down", "left", "right".
         timeout: Inactivity seconds to reset the auto-release timer to.
-        key_hold: Seconds to hold the key before releasing (default 40 ms).
+        key_hold: Seconds to hold the key before releasing (default 50 ms).
 
     Returns False if manual mode is not active.
     """
@@ -162,18 +162,18 @@ def is_manual_active() -> bool:
 
 def execute_stratagem(
     keys: list[str],
-    key_delay: float = 0.06,
-    ctrl_delay: float = 0.1,
-    key_hold: float = 0.04,
+    key_delay: float = 0.08,
+    ctrl_delay: float = 0.15,
+    key_hold: float = 0.05,
     auto_click: bool = False,
 ) -> bool:
     """Press Ctrl, type directional key sequence, release Ctrl.
 
     Args:
         keys: List of directional inputs, e.g. ["up", "right", "down"].
-        key_delay: Seconds to wait after releasing each key before the next (default 60 ms).
-        ctrl_delay: Seconds to wait after pressing Ctrl before the first key (default 100 ms).
-        key_hold: Seconds to hold each key before releasing (default 40 ms).
+        key_delay: Seconds to wait after releasing each key before the next (default 80 ms).
+        ctrl_delay: Seconds to wait after pressing Ctrl before the first key (default 150 ms).
+        key_hold: Seconds to hold each key before releasing (default 50 ms).
         auto_click: If True, clicks the left mouse button after Ctrl release
                     (auto-throw the stratagem marker).
 
