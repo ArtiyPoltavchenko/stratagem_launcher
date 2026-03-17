@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17 (Phase 11: Keypress debug & fixes complete)
+> Last updated: 2026-03-17 (Phase 12: server_manager bug fixes + landscape layout fix)
 
 ---
 
@@ -209,12 +209,15 @@ Root cause: press+release was instantaneous (no hold time), Ctrl delay was 30ms 
 
 ### Changes
 
-**`server/config.py`:** `key_hold_ms=40` (new), `auto_click=False` (new); `key_delay_ms` 50→60, `ctrl_hold_delay_ms` 30→100; `key_hold` property added.
+**`server/config.py`:** `key_hold_ms=50` (new), `auto_click=False` (new); `key_delay_ms` default corrected to 80ms, `ctrl_hold_delay_ms` corrected to 150ms; `key_hold` property added.
+
+> ⚠️ Initial implementation used 40/60/100ms — corrected to 50/80/150ms per user specification in a follow-up commit.
 
 **`server/keypress.py`:**
-- `execute_stratagem(key_hold=0.04, auto_click=False)` — holds each key for `key_hold` seconds before releasing; optional LMB click after Ctrl release for auto-throw
-- `manual_key(key_hold=0.04)` — same hold applied to manual input
-- Diagnostic `[KEYPRESS]` debug log lines with `time.time()` timestamps
+- `execute_stratagem(key_hold=0.05, key_delay=0.08, ctrl_delay=0.15, auto_click=False)` — holds each key 50ms, 80ms inter-key gap, 150ms Ctrl settle; optional LMB click after Ctrl release for auto-throw
+- `manual_key(key_hold=0.05)` — same hold applied to manual input
+- Diagnostic `[KEYPRESS]` log format: `[KEYPRESS] 0.000s Ctrl DOWN`, `[KEYPRESS] 0.150s 'right' (VK=0x44) DOWN` (relative timestamps + VK hex codes)
+- `_VK_CODES` dict centralises `up=0x57 / down=0x53 / left=0x41 / right=0x44`
 - `pynput.mouse` imported in the same try block as pynput.keyboard
 
 **`server/app.py`:** passes `key_hold`/`auto_click` from config; `POST /api/settings` accepts `key_hold_ms`/`auto_click`, logs `[SETTINGS] Received/Applied`; `GET /api/settings` returns new fields.
@@ -222,10 +225,11 @@ Root cause: press+release was instantaneous (no hold time), Ctrl delay was 30ms 
 **`web/index.html`:** "Auto-throw after input (LMB click)" checkbox.
 
 **`web/app.js`:** Settings apply shows "✓" toast on success, "server unreachable" on error; saves/sends `auto_click`.
+Swipe zone moved from `#grid` cards to `#loadout-dpad-area` (more natural UX — swipe the D-pad area, not the cards).
 
 ### Timing model (Helldivers 2 recommended)
 ```
-Ctrl DOWN → [ctrl_delay 100ms] → key DOWN → [key_hold 40ms] → key UP → [key_delay 60ms] → next key …
+Ctrl DOWN → [ctrl_delay 150ms] → key DOWN → [key_hold 50ms] → key UP → [key_delay 80ms] → next key …
 ```
 
 ### Result
@@ -233,7 +237,42 @@ Ctrl DOWN → [ctrl_delay 100ms] → key DOWN → [key_hold 40ms] → key UP →
 
 ---
 
-## Phase 10: Loadout D-pad Redesign (2026-03-17)
+## Phase 12: server_manager Bug Fixes (2026-03-17)
+
+Five bugs fixed in `desktop/server_manager.py`, one commit per bug.
+
+### Bug 1 — QR white square (diagnostic + minsize)
+- Added `DEBUG QR:` prints to `_refresh_qr()` to expose canvas size and matrix dimensions at runtime
+- Left panel minsize 380 → 400px
+- Removed accidental duplicate rows/cols/box calculation block that was introduced during a previous edit
+
+### Bug 2 — USB button had no action
+- Selecting "USB (ADB)" radio now shows `messagebox.showinfo` with setup instructions
+- After OK: launches `scripts\setup_usb.bat` in a new console via `subprocess.Popen(creationflags=CREATE_NEW_CONSOLE)`
+- Logs `[USB] Running ADB port forwarding...` to the log panel
+
+### Bug 3 — WiFi IP wrong (WSL/VPN address)
+- Old `get_lan_ip()` used `socket.getaddrinfo(gethostname(), ...)` — on WSL2 hosts this returns the virtual NIC IP (`172.x.x.x`) rather than the real WiFi adapter
+- **New implementation**: UDP socket `connect("8.8.8.8", 80)` forces the OS routing table to pick the correct outbound interface; `getsockname()[0]` reads the result. No traffic is sent.
+- This is also the **primary root cause of Bug 1** (see QR analysis below)
+
+### Bug 4 — Start/Stop produced no log output
+- Added `_log(msg)` convenience method (routes through `logging.getLogger(__name__).info`)
+- `_start()` now logs `Server started on http://<host>:<port>` after setting running state
+- `_stop()` now logs `Server stopped` immediately when UI switches to STOPPED
+
+### Bug 5 — Closing window with server not running caused unnecessary _stop() call
+- Old `_on_close()` always called `_stop()` (which joins a daemon thread that doesn't exist)
+- New: checks `_server_thread.is_alive()` first; if not alive → `root.destroy()` immediately
+- If alive → logs `Shutting down server...` then `_stop(callback=root.destroy)`
+- Added `print("[EXIT] _on_close called, server alive: ...")` for diagnostics
+
+### Result
+82 tests passing (unchanged — GUI code has no unit tests by design).
+
+---
+
+## Phase 10: Loadout D-pad Redesign + Landscape Fix (2026-03-17)
 
 Combined loadout view + manual D-pad into a single gaming screen. Removed the separate D-pad overlay for loadout context.
 
@@ -268,8 +307,25 @@ Combined loadout view + manual D-pad into a single gaming screen. Removed the se
 - `renderGrid()`: toggles `body--loadout-view` on `document.body`
 - `initSwipe()`: `touchstart`/`touchend` on `#grid`; threshold 30px; swipe → `dpadTap()`
 
+### Post-release landscape bug fixes
+
+**Bug: D-pad cross overlapped the auto-release slider in landscape mode.**
+- Root cause: `ldpad-cancel-btn` was nested inside `ldpad-topbar`, not a direct flex child of `loadout-dpad-area`. CSS `order` had no effect because flex order only applies to direct children. A `display: contents` workaround was attempted but proved unreliable across tested devices.
+- Fix: moved `ldpad-cancel-btn` in HTML to be the last direct child of `loadout-dpad-area` (after `ldpad-cross-wrap`). Eliminated the `display: contents` hack entirely.
+- Rewrote the `@media (orientation: landscape)` block for `.body--loadout-view` accordingly.
+
+**Bug: Yellow "manual active" outline exceeded viewport boundaries.**
+- Root cause: `outline: 2px dashed; outline-offset: 2px` renders outside the element box and can overflow past the viewport edge — no CSS property clips it.
+- Fix: replaced with `box-shadow: inset 0 0 0 2px var(--accent-yellow)` which draws inside the element bounds.
+
+**`--cell` formula updated:**
+```css
+--cell: clamp(52px, min(calc(50vw / 3), calc((100dvh - 240px) / 3)), 86px);
+```
+Ties cross cell size to both available width (50vw / 3 columns) and available height (dvh minus ~240px of fixed chrome overhead), preventing the cross from overflowing the panel on short landscape screens (e.g., S23 Ultra landscape).
+
 ### Result
-72 tests passing. Loadout view is now a self-contained gaming panel: 4 large cards + D-pad in one screen. All view shows FAB for overlay D-pad access.
+82 tests passing. Loadout view is now a self-contained gaming panel: 4 large cards + D-pad in one screen. All view shows FAB for overlay D-pad access.
 
 ---
 
@@ -286,6 +342,11 @@ Combined loadout view + manual D-pad into a single gaming screen. Removed the se
 | 2026-03-17 | `localhost:5000` never connects (Windows 11 resolves to IPv6 `::1`) | URL labels and Copy now always use `127.0.0.1` explicitly |
 | 2026-03-17 | QR code not shown in exe (PIL inside try/except not bundled by PyInstaller) | `--collect-all PIL --collect-all qrcode` in build script; `except Exception` fallback |
 | 2026-03-17 | GUI text too small / window not resizable enough | Fonts 1.5× larger; window 1160×840, min 980×720 |
+| 2026-03-17 | QR shows white square — `get_lan_ip()` returned WSL/VPN IP, QR never drawn | Replaced `getaddrinfo` with UDP socket route trick; debug prints added |
+| 2026-03-17 | USB radio button had no action | `messagebox` + `subprocess.Popen(setup_usb.bat)` |
+| 2026-03-17 | Start/Stop produced no log | Added `_log()` helper; both actions now log to panel |
+| 2026-03-17 | Closing app with no server running caused unnecessary blocking call | `_on_close` checks `is_alive()` before calling `_stop()` |
+| 2026-03-17 | Landscape: D-pad cross overlapped slider; yellow outline exceeded viewport | Cancel btn moved out of topbar in HTML; `inset box-shadow` replaces `outline` |
 
 ---
 
@@ -314,7 +375,7 @@ scripts\build_exe.bat
 python3 -m venv .venv
 source .venv/bin/activate.fish
 pip install -r requirements-dev.txt
-pytest tests/   # 72 tests, all green
+pytest tests/   # 82 tests, all green
 ```
 
 **Phone:** open `http://<PC-IP>:5000` in Chrome → Add to Home Screen.
