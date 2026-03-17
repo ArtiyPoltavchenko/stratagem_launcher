@@ -97,15 +97,15 @@ F_DOT   = ("Segoe UI", 20)
 # ---------------------------------------------------------------- IP helper
 
 def get_lan_ip() -> str:
-    """Return the first non-loopback IPv4 address, or empty string."""
+    """Get actual LAN IP by connecting to external address (no traffic sent)."""
     try:
-        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
-            ip = info[4][0]
-            if not ip.startswith("127."):
-                return ip
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # determines route without sending data
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
     except Exception:
-        pass
-    return ""
+        return ""
 
 
 # ---------------------------------------------------------------- log handler
