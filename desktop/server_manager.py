@@ -20,6 +20,28 @@ from tkinter import scrolledtext
 import tkinter as tk
 
 
+# ---------------------------------------------------------------- venv check
+# Runs early so the error message is readable before any import fails.
+# Skipped when running as a PyInstaller bundle (sys.frozen is set).
+
+_in_venv = hasattr(sys, "real_prefix") or (
+    hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+)
+if not _in_venv and not getattr(sys, "frozen", False):
+    _venv_python = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        ".venv_win", "Scripts", "python.exe",
+    )
+    if os.path.exists(_venv_python):
+        print("[!] Not running in a virtual environment.")
+        print("    Please activate the venv first:")
+        print()
+        print("        .venv_win\\Scripts\\activate")
+        print("        python desktop\\server_manager.py")
+        sys.exit(1)
+    # venv not found — dependencies might be installed globally, continue
+
+
 # ------------------------------------------------------------------ paths
 
 def resource_path(relative_path: str) -> str:
