@@ -217,7 +217,7 @@ class ServerManagerApp:
         paned.pack(fill="both", expand=True, padx=8, pady=(6, 8))
 
         left = tk.Frame(paned, bg=COLOR_BG)
-        paned.add(left, minsize=380, stretch="never")
+        paned.add(left, minsize=400, stretch="never")
 
         right = tk.Frame(paned, bg=COLOR_BG)
         paned.add(right, minsize=300, stretch="always")
@@ -391,6 +391,7 @@ class ServerManagerApp:
 
     def _refresh_qr(self) -> None:
         """Draw QR code directly on tkinter Canvas — no PIL needed."""
+        print(f"DEBUG QR: canvas size={self.qr_canvas.winfo_width()}x{self.qr_canvas.winfo_height()}")
         port = self._get_port()
         mode = self._mode_var.get()
         lan  = get_lan_ip()
@@ -444,6 +445,7 @@ class ServerManagerApp:
             canvas_size = 200   # fallback before first Tk layout pass
 
         box = max(1, canvas_size // max(rows, cols, 1))
+        print(f"DEBUG QR: matrix {rows}x{cols}, box={box}")
         total_w = cols * box
         total_h = rows * box
         ox = (canvas_size - total_w) // 2
