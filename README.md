@@ -46,26 +46,9 @@ Double-click **`Stratagem Launcher.exe`**.
 
 The Server Manager window opens:
 
-```
-┌─────────────────────────────────────────────┐
-│  Server Status:  ● STOPPED                  │
-├────────────────────┬────────────────────────┤
-│  Connection        │  Log                   │
-│  WiFi:  192.168... │                        │
-│  Local: 127.0.0.1  │                        │
-│  Port:  5000       │                        │
-│                    │                        │
-│  [QR code here     │                        │
-│   after Start]     │                        │
-├────────────────────┤                        │
-│  Settings          │                        │
-│  Mode: ● WiFi      │                        │
-│  [Install ADB]     │                        │
-│  Key delay: 50ms   │                        │
-├────────────────────┴────────────────────────┤
-│  ▶ Start    ■ Stop    ↻ Restart             │
-└─────────────────────────────────────────────┘
-```
+
+<img width="1280" height="971" alt="image" src="https://github.com/user-attachments/assets/07a89723-3fd7-4b1b-a25c-100cca21e636" />
+
 
 ### 3. Start the server
 
