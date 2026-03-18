@@ -341,12 +341,14 @@ class ServerManagerApp:
             left, text="Open on phone:", bg=COLOR_BG, fg=COLOR_DIM, font=F_SM,
         ).pack(pady=(8, 2))
 
-        # White-bg frame provides quiet zone around the QR image
-        qr_frame = tk.Frame(left, bg="white", padx=4, pady=4)
+        # White-bg frame provides quiet zone around the QR image (min 350×350)
+        qr_frame = tk.Frame(left, bg="white", padx=4, pady=4,
+                            width=350, height=350)
         qr_frame.pack(padx=8, pady=(0, 4))
+        qr_frame.pack_propagate(False)
 
         self._qr_label = tk.Label(qr_frame, bg="white", bd=0)
-        self._qr_label.pack()
+        self._qr_label.place(relx=0.5, rely=0.5, anchor="center")
         self._qr_photo = None   # keep reference so GC won't collect it
 
         self._qr_url_label = tk.Label(
@@ -635,10 +637,12 @@ class ServerManagerApp:
     def _start(self) -> None:
         if self._server_thread and self._server_thread.is_alive():
             return
+        delay_ms = self._delay_var.get()
         self._cfg = Config(
             host=self._get_host(),
             port=self._get_port(),
-            key_delay_ms=self._delay_var.get(),
+            key_delay_min_ms=delay_ms,
+            key_delay_max_ms=delay_ms,
         )
         self._server_thread = ServerThread(self._cfg)
         self._server_thread.start()
