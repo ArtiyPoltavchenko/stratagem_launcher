@@ -613,8 +613,6 @@ function initSettings() {
   const applyBtn = document.getElementById('apply-btn');
   const testBtn = document.getElementById('test-conn-btn');
   const ipInput = document.getElementById('setting-ip');
-  const delayInput = document.getElementById('setting-delay');
-  const delayValue = document.getElementById('delay-value');
   const cdModSlider = document.getElementById('setting-cd-modifier');
   const cdModNum = document.getElementById('setting-cd-modifier-num');
   const cdModValue = document.getElementById('cd-modifier-value');
@@ -623,10 +621,6 @@ function initSettings() {
   // Load saved values
   const s = loadSettings();
   if (s.serverIp) ipInput.value = s.serverIp;
-  if (s.keyDelayMs) {
-    delayInput.value = s.keyDelayMs;
-    delayValue.textContent = s.keyDelayMs;
-  }
   const autoClickEl = document.getElementById('setting-auto-click');
   if (autoClickEl) autoClickEl.checked = s.autoClick ?? false;
 
@@ -636,10 +630,7 @@ function initSettings() {
   cdModValue.textContent = savedMod;
 
   showCdCheck.checked = isShowCooldowns();
-
-  delayInput.addEventListener('input', () => {
-    delayValue.textContent = delayInput.value;
-  });
+  initDelaySlider();
 
   function applyModifier(val) {
     const clamped = Math.min(50, Math.max(0, Math.round(val / 5) * 5));
@@ -666,16 +657,17 @@ function initSettings() {
 
   applyBtn.addEventListener('click', async () => {
     const ip = ipInput.value.trim();
-    const delay = parseInt(delayInput.value, 10);
     const autoClick = document.getElementById('setting-auto-click')?.checked ?? false;
-    saveSettings({ serverIp: ip || null, keyDelayMs: delay, autoClick });
+    const delayMin = parseInt(localStorage.getItem('sl_delay_min') ?? '50', 10);
+    const delayMax = parseInt(localStorage.getItem('sl_delay_max') ?? '80', 10);
+    saveSettings({ serverIp: ip || null, autoClick });
 
     // Push settings to server; show feedback based on success/failure
     try {
       await apiFetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key_delay_ms: delay, auto_click: autoClick }),
+        body: JSON.stringify({ key_delay_min_ms: delayMin, key_delay_max_ms: delayMax, auto_click: autoClick }),
       });
       overlay.classList.add('hidden');
       showToast('Settings saved ✓');
@@ -700,6 +692,47 @@ function initSettings() {
       testBtn.disabled = false;
     }
   });
+}
+
+// ----------------------------------------------------------- delay dual-range
+
+function initDelaySlider() {
+  const minEl = document.getElementById('delay-min');
+  const maxEl = document.getElementById('delay-max');
+  const fill  = document.getElementById('delay-fill');
+  const label = document.getElementById('delay-label');
+
+  minEl.value = localStorage.getItem('sl_delay_min') ?? 50;
+  maxEl.value = localStorage.getItem('sl_delay_max') ?? 80;
+
+  function update() {
+    let mn = parseInt(minEl.value);
+    let mx = parseInt(maxEl.value);
+    if (mn > mx) { [mn, mx] = [mx, mn]; minEl.value = mn; maxEl.value = mx; }
+    const pct = (v) => (v - 10) / (200 - 10) * 100;
+    fill.style.left  = pct(mn) + '%';
+    fill.style.width = (pct(mx) - pct(mn)) + '%';
+    label.textContent = mn === mx ? `${mn} ms` : `${mn}–${mx} ms`;
+    localStorage.setItem('sl_delay_min', mn);
+    localStorage.setItem('sl_delay_max', mx);
+  }
+
+  minEl.addEventListener('input', update);
+  maxEl.addEventListener('input', update);
+  update();
+
+  function send() {
+    apiFetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key_delay_min_ms: parseInt(minEl.value),
+        key_delay_max_ms: parseInt(maxEl.value),
+      }),
+    }).then(() => showToast(`Delay: ${label.textContent}`)).catch(() => {});
+  }
+  minEl.addEventListener('change', send);
+  maxEl.addEventListener('change', send);
 }
 
 // ------------------------------------------------------------------ search

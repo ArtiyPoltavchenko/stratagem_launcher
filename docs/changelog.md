@@ -7,6 +7,16 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-18 — feat: randomized key delay with dual-range slider (anti-macro)
+
+- `server/config.py`: replaced `key_delay_ms` with `key_delay_min_ms`/`key_delay_max_ms`; `key_delay_ms` kept as backward-compat property
+- `server/keypress.py`: added `_random_delay(min_ms, max_ms)` seeded with `time.time_ns()`; `execute_stratagem()` now accepts `key_delay_min_ms`/`key_delay_max_ms`; deprecated `key_delay` param kept for compat
+- `server/app.py`: GET/POST `/api/settings` updated for new fields; backward compat for old `key_delay_ms`
+- `web/index.html`: replaced single slider with dual-range HTML
+- `web/style.css`: added `.dual-range` CSS component
+- `web/app.js`: added `initDelaySlider()` with live fill, localStorage persistence, and `change` → server sync
+- `tests/test_api.py`, `tests/test_keypress.py`: updated to new parameter names
+
 ### 2026-03-18 — feat: delete loadout button in edit mode
 
 - `web/index.html`: added `#edit-delete-btn` between Cancel and Save in edit header

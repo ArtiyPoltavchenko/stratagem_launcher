@@ -87,7 +87,8 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
         try:
             keypress.execute_stratagem(
                 keys=s["keys"],
-                key_delay=sl_cfg.key_delay,
+                key_delay_min_ms=sl_cfg.key_delay_min_ms,
+                key_delay_max_ms=sl_cfg.key_delay_max_ms,
                 ctrl_delay=sl_cfg.ctrl_hold_delay,
                 key_hold=sl_cfg.key_hold,
                 auto_click=sl_cfg.auto_click,
@@ -156,7 +157,9 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
     def get_settings():
         sl_cfg: Config = app.config["SL_CONFIG"]
         return jsonify({
-            "key_delay_ms": sl_cfg.key_delay_ms,
+            "key_delay_min_ms": sl_cfg.key_delay_min_ms,
+            "key_delay_max_ms": sl_cfg.key_delay_max_ms,
+            "key_delay_ms": sl_cfg.key_delay_min_ms,  # deprecated, backward compat
             "ctrl_hold_delay_ms": sl_cfg.ctrl_hold_delay_ms,
             "key_hold_ms": sl_cfg.key_hold_ms,
             "auto_click": sl_cfg.auto_click,
@@ -190,11 +193,26 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
         body = request.get_json(silent=True) or {}
         log.info("[SETTINGS] Received: %s", body)
 
-        if "key_delay_ms" in body:
+        if "key_delay_min_ms" in body:
+            val = int(body["key_delay_min_ms"])
+            if not 10 <= val <= 500:
+                return jsonify({"status": "error", "message": "key_delay_min_ms must be 10–500"}), 400
+            sl_cfg.key_delay_min_ms = val
+        if "key_delay_max_ms" in body:
+            val = int(body["key_delay_max_ms"])
+            if not 10 <= val <= 500:
+                return jsonify({"status": "error", "message": "key_delay_max_ms must be 10–500"}), 400
+            sl_cfg.key_delay_max_ms = val
+        # Backward compat: old key_delay_ms sets both min and max
+        if "key_delay_ms" in body and "key_delay_min_ms" not in body:
             val = int(body["key_delay_ms"])
             if not 10 <= val <= 500:
                 return jsonify({"status": "error", "message": "key_delay_ms must be 10–500"}), 400
-            sl_cfg.key_delay_ms = val
+            sl_cfg.key_delay_min_ms = val
+            sl_cfg.key_delay_max_ms = val
+        # Enforce min <= max
+        if sl_cfg.key_delay_min_ms > sl_cfg.key_delay_max_ms:
+            sl_cfg.key_delay_max_ms = sl_cfg.key_delay_min_ms
 
         if "ctrl_hold_delay_ms" in body:
             val = int(body["ctrl_hold_delay_ms"])
@@ -212,12 +230,15 @@ def create_app(cfg: Config = _default_config, loadouts_path: Path | None = None)
             sl_cfg.auto_click = bool(body["auto_click"])
 
         log.info(
-            "[SETTINGS] Applied: key_delay_ms=%d ctrl_hold_delay_ms=%d key_hold_ms=%d auto_click=%s",
-            sl_cfg.key_delay_ms, sl_cfg.ctrl_hold_delay_ms, sl_cfg.key_hold_ms, sl_cfg.auto_click,
+            "[SETTINGS] Applied: key_delay=%d–%dms ctrl_hold_delay_ms=%d key_hold_ms=%d auto_click=%s",
+            sl_cfg.key_delay_min_ms, sl_cfg.key_delay_max_ms,
+            sl_cfg.ctrl_hold_delay_ms, sl_cfg.key_hold_ms, sl_cfg.auto_click,
         )
         return jsonify({
             "status": "ok",
-            "key_delay_ms": sl_cfg.key_delay_ms,
+            "key_delay_min_ms": sl_cfg.key_delay_min_ms,
+            "key_delay_max_ms": sl_cfg.key_delay_max_ms,
+            "key_delay_ms": sl_cfg.key_delay_min_ms,
             "ctrl_hold_delay_ms": sl_cfg.ctrl_hold_delay_ms,
             "key_hold_ms": sl_cfg.key_hold_ms,
             "auto_click": sl_cfg.auto_click,
@@ -230,14 +251,16 @@ def _parse_args() -> Config:
     parser = argparse.ArgumentParser(description="Stratagem Launcher Server")
     parser.add_argument("--host", default="127.0.0.1", help="Bind host (use 0.0.0.0 for WiFi)")
     parser.add_argument("--port", type=int, default=5000)
-    parser.add_argument("--key-delay", type=int, default=50, dest="key_delay_ms")
+    parser.add_argument("--key-delay-min", type=int, default=50, dest="key_delay_min_ms")
+    parser.add_argument("--key-delay-max", type=int, default=80, dest="key_delay_max_ms")
     parser.add_argument("--ctrl-delay", type=int, default=30, dest="ctrl_hold_delay_ms")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     return Config(
         host=args.host,
         port=args.port,
-        key_delay_ms=args.key_delay_ms,
+        key_delay_min_ms=args.key_delay_min_ms,
+        key_delay_max_ms=args.key_delay_max_ms,
         ctrl_hold_delay_ms=args.ctrl_hold_delay_ms,
         debug=args.debug,
     )

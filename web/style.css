@@ -1124,6 +1124,49 @@ body {
   margin-left: 8px;
 }
 
+.settings-label { font-size: 0.85rem; color: var(--text-secondary); }
+.settings-value { font-size: 0.8rem; color: var(--accent-yellow); white-space: nowrap; }
+
+.dual-range {
+  position: relative;
+  width: 160px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.dual-range input[type=range] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0; left: 0;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+.dual-range input[type=range]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent-yellow);
+  cursor: pointer;
+  pointer-events: all;
+}
+.dual-range__track {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 100%; height: 4px;
+  background: #333;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.dual-range__fill {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  height: 4px;
+  background: var(--accent-yellow);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
 .btn {
   background: var(--bg-card);
   border: 1px solid #333;

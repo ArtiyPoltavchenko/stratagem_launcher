@@ -139,10 +139,14 @@
       </div>
 
       <div class="settings-row">
-        <label>
-          Key delay: <span class="range-value" id="delay-value">50</span> ms
-        </label>
-        <input type="range" id="setting-delay" min="10" max="300" step="10" value="50">
+        <span class="settings-label">Key delay</span>
+        <div class="dual-range" id="delay-range-wrap">
+          <input type="range" id="delay-min" min="10" max="200" step="5" value="50">
+          <input type="range" id="delay-max" min="10" max="200" step="5" value="80">
+          <div class="dual-range__track"></div>
+          <div class="dual-range__fill" id="delay-fill"></div>
+        </div>
+        <span class="settings-value" id="delay-label">50–80 ms</span>
       </div>
 
       <div class="settings-row">

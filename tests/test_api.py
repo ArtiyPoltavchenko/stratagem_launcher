@@ -10,7 +10,7 @@ from server.config import Config
 
 @pytest.fixture
 def app():
-    cfg = Config(key_delay_ms=0, ctrl_hold_delay_ms=0)
+    cfg = Config(key_delay_min_ms=0, key_delay_max_ms=0, ctrl_hold_delay_ms=0)
     application = create_app(cfg)
     application.config["TESTING"] = True
     return application
@@ -24,7 +24,7 @@ def client(app):
 @pytest.fixture
 def loadouts_app(tmp_path):
     """App variant with loadouts stored in a temp directory."""
-    cfg = Config(key_delay_ms=0, ctrl_hold_delay_ms=0)
+    cfg = Config(key_delay_min_ms=0, key_delay_max_ms=0, ctrl_hold_delay_ms=0)
     application = create_app(cfg, loadouts_path=tmp_path / "loadouts.json")
     application.config["TESTING"] = True
     return application

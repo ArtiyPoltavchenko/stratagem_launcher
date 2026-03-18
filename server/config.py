@@ -5,7 +5,8 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    key_delay_ms: int = 80         # inter-key pause after release (ms)
+    key_delay_min_ms: int = 50     # minimum inter-key pause (ms)
+    key_delay_max_ms: int = 80     # maximum inter-key pause (ms); equal to min = no randomness
     ctrl_hold_delay_ms: int = 150  # pause after Ctrl press before first key (ms)
     key_hold_ms: int = 50          # how long to hold each key before releasing (ms)
     auto_click: bool = False       # click LMB after stratagem to auto-throw marker
@@ -13,10 +14,15 @@ class Config:
     port: int = 5000
     debug: bool = False
 
+    # Backward-compat property: returns min value
     @property
-    def key_delay(self) -> float:
-        """Key delay in seconds."""
-        return self.key_delay_ms / 1000.0
+    def key_delay_ms(self) -> int:
+        return self.key_delay_min_ms
+
+    @key_delay_ms.setter
+    def key_delay_ms(self, value: int) -> None:
+        self.key_delay_min_ms = value
+        self.key_delay_max_ms = value
 
     @property
     def ctrl_hold_delay(self) -> float:

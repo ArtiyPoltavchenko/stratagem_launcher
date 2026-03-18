@@ -6,6 +6,7 @@ NOTE: pynput only works on Windows for injecting keys into games.
 """
 
 import logging
+import random as _random
 import threading
 import time
 
@@ -46,6 +47,14 @@ def _build_key_map() -> dict:
 _KEY_MAP = _build_key_map()
 
 _lock = threading.Lock()
+
+
+def _random_delay(min_ms: float, max_ms: float) -> float:
+    """Sleep for a random duration in [min_ms, max_ms] ms. Returns actual delay in ms."""
+    rng = _random.Random(time.time_ns())
+    delay = min_ms if max_ms <= min_ms else rng.uniform(min_ms, max_ms)
+    time.sleep(delay / 1000.0)
+    return delay
 
 # ---------------------------------------------------------------- manual mode
 
@@ -168,16 +177,20 @@ def is_manual_active() -> bool:
 
 def execute_stratagem(
     keys: list[str],
-    key_delay: float = 0.08,
+    key_delay_min_ms: float = 50,
+    key_delay_max_ms: float = 80,
     ctrl_delay: float = 0.15,
     key_hold: float = 0.05,
     auto_click: bool = False,
+    # Deprecated alias kept for backward compat (sets both min and max)
+    key_delay: float | None = None,
 ) -> bool:
     """Press Ctrl, type directional key sequence, release Ctrl.
 
     Args:
         keys: List of directional inputs, e.g. ["up", "right", "down"].
-        key_delay: Seconds to wait after releasing each key before the next (default 80 ms).
+        key_delay_min_ms: Minimum inter-key delay in ms (default 50).
+        key_delay_max_ms: Maximum inter-key delay in ms (default 80). Equal to min = no randomness.
         ctrl_delay: Seconds to wait after pressing Ctrl before the first key (default 150 ms).
         key_hold: Seconds to hold each key before releasing (default 50 ms).
         auto_click: If True, clicks the left mouse button after Ctrl release
@@ -191,6 +204,11 @@ def execute_stratagem(
         ValueError: If keys list is empty or contains invalid directions.
         BlockingIOError: If another stratagem is currently being executed.
     """
+    # Backward compat: key_delay (seconds) sets both min and max (no randomness)
+    if key_delay is not None:
+        key_delay_min_ms = key_delay * 1000
+        key_delay_max_ms = key_delay * 1000
+
     if not _PYNPUT_AVAILABLE:
         raise RuntimeError(
             "pynput is not available. Run the server on Windows to use key simulation."
@@ -207,8 +225,8 @@ def execute_stratagem(
         raise BlockingIOError("Another stratagem is currently being executed")
 
     log.debug(
-        "[KEYPRESS] start sequence=%s key_hold=%.0fms key_delay=%.0fms ctrl_delay=%.0fms",
-        keys, key_hold * 1000, key_delay * 1000, ctrl_delay * 1000,
+        "[KEYPRESS] start sequence=%s key_hold=%.0fms delay=%g–%gms ctrl_delay=%.0fms",
+        keys, key_hold * 1000, key_delay_min_ms, key_delay_max_ms, ctrl_delay * 1000,
     )
 
     try:
@@ -226,8 +244,11 @@ def execute_stratagem(
             keyboard.press(key)
             time.sleep(key_hold)
             keyboard.release(key)
-            log.debug("[KEYPRESS] %.3fs '%s' (VK=0x%02X) UP", time.time() - t0, direction, vk)
-            time.sleep(key_delay)
+            actual_ms = _random_delay(key_delay_min_ms, key_delay_max_ms)
+            log.debug(
+                "[KEYPRESS] %.3fs '%s' (VK=0x%02X) UP  delay=%.1fms (range: %.0f–%.0fms)",
+                time.time() - t0, direction, vk, actual_ms, key_delay_min_ms, key_delay_max_ms,
+            )
 
         keyboard.release(Key.ctrl)
         log.debug("[KEYPRESS] %.3fs Ctrl UP", time.time() - t0)

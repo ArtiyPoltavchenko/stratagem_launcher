@@ -73,25 +73,25 @@ def reset_lock():
 class TestExecuteStratagem:
     def test_returns_true_on_success(self, mock_pynput):
         from server.keypress import execute_stratagem
-        assert execute_stratagem(["up", "right"], key_delay=0, ctrl_delay=0) is True
+        assert execute_stratagem(["up", "right"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0) is True
 
     def test_presses_ctrl_first(self, mock_pynput):
         controller, key, _ = mock_pynput
         from server.keypress import execute_stratagem
-        execute_stratagem(["up"], key_delay=0, ctrl_delay=0)
+        execute_stratagem(["up"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         assert controller.press.call_args_list[0] == call(key.ctrl)
 
     def test_releases_ctrl_last(self, mock_pynput):
         controller, key, _ = mock_pynput
         from server.keypress import execute_stratagem
-        execute_stratagem(["up"], key_delay=0, ctrl_delay=0)
+        execute_stratagem(["up"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         assert controller.release.call_args_list[-1] == call(key.ctrl)
 
     def test_correct_vk_sequence(self, mock_pynput):
         """Keys are sent as VK codes (not raw chars) in the correct order."""
         controller, key, vk_sentinels = mock_pynput
         from server.keypress import execute_stratagem, _KEY_MAP
-        execute_stratagem(["up", "down", "left", "right"], key_delay=0, ctrl_delay=0)
+        execute_stratagem(["up", "down", "left", "right"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
 
         pressed = [c.args[0] for c in controller.press.call_args_list]
         # First press is Ctrl, then up/down/left/right VK codes
@@ -105,7 +105,7 @@ class TestExecuteStratagem:
         """Verify keys are NOT raw 'w','a','s','d' strings — must be VK objects."""
         controller, key, _ = mock_pynput
         from server.keypress import execute_stratagem
-        execute_stratagem(["up", "down", "left", "right"], key_delay=0, ctrl_delay=0)
+        execute_stratagem(["up", "down", "left", "right"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         pressed = [c.args[0] for c in controller.press.call_args_list[1:]]  # skip Ctrl
         for k in pressed:
             assert k not in ("w", "a", "s", "d"), f"Raw char sent instead of VK code: {k!r}"
@@ -126,21 +126,21 @@ class TestExecuteStratagem:
         kp._lock.acquire()
         try:
             with pytest.raises(BlockingIOError, match="Another stratagem"):
-                execute_stratagem(["up"], key_delay=0, ctrl_delay=0)
+                execute_stratagem(["up"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         finally:
             kp._lock.release()
 
     def test_lock_released_after_success(self, mock_pynput):
         import server.keypress as kp
         from server.keypress import execute_stratagem
-        execute_stratagem(["up"], key_delay=0, ctrl_delay=0)
+        execute_stratagem(["up"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         assert not kp._lock.locked()
 
     def test_lock_released_after_error(self, mock_pynput):
         import server.keypress as kp
         from server.keypress import execute_stratagem
         with pytest.raises(ValueError):
-            execute_stratagem(["bad_direction"], key_delay=0, ctrl_delay=0)
+            execute_stratagem(["bad_direction"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         assert not kp._lock.locked()
 
     def test_key_hold_between_press_and_release(self, mock_pynput):
@@ -155,7 +155,7 @@ class TestExecuteStratagem:
 
         with patch("time.sleep") as mock_sleep:
             mock_sleep.side_effect = lambda t: events.append(("sleep", t))
-            kp.execute_stratagem(["up"], key_delay=0.06, ctrl_delay=0.0, key_hold=0.04)
+            kp.execute_stratagem(["up"], key_delay_min_ms=60, key_delay_max_ms=60, ctrl_delay=0.0, key_hold=0.04)
 
         up_key = kp._KEY_MAP["up"]
         press_idx = next(i for i, e in enumerate(events) if e == ("press", up_key))
@@ -175,7 +175,7 @@ class TestExecuteStratagem:
 
         with patch("time.sleep") as mock_sleep:
             mock_sleep.side_effect = lambda t: events.append(("sleep", t))
-            kp.execute_stratagem(["up"], key_delay=0.06, ctrl_delay=0.0, key_hold=0.0)
+            kp.execute_stratagem(["up"], key_delay_min_ms=60, key_delay_max_ms=60, ctrl_delay=0.0, key_hold=0.0)
 
         up_key = kp._KEY_MAP["up"]
         release_idx = next(i for i, e in enumerate(events) if e == ("release", up_key))
@@ -216,7 +216,7 @@ class TestManualMode:
         from server.keypress import manual_start, execute_stratagem, manual_stop
         manual_start(ctrl_delay=0, timeout=5)
         with pytest.raises(BlockingIOError):
-            execute_stratagem(["up"], key_delay=0, ctrl_delay=0)
+            execute_stratagem(["up"], key_delay_min_ms=0, key_delay_max_ms=0, ctrl_delay=0)
         manual_stop()
 
     def test_manual_key_sends_vk(self, mock_pynput):
