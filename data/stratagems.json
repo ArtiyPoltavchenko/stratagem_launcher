@@ -16,7 +16,8 @@
     "support":   { "name": "Support Weapons",  "color": "#43a047" },
     "backpack":  { "name": "Backpack",         "color": "#7b1fa2" },
     "defensive": { "name": "Defensive",        "color": "#f57c00" },
-    "vehicle":   { "name": "Vehicles",         "color": "#795548" }
+    "vehicle":   { "name": "Vehicles",         "color": "#795548" },
+    "mission":   { "name": "Mission",          "color": "#607d8b" }
   },
   "stratagems": [
     {
@@ -426,26 +427,6 @@
       "warbond": "Python Commandos"
     },
     {
-      "id": "epoch",
-      "name": "PLAS-45 Epoch",
-      "keys": ["down", "right", "down", "up", "right", "left"],
-      "category": "support",
-      "icon": "Control Group/Epoch.svg",
-      "cooldown": 480,
-      "verified": false,
-      "warbond": "Control Group"
-    },
-    {
-      "id": "laser_sentry",
-      "name": "A/FLAM-40 Laser Sentry",
-      "keys": ["down", "up", "right", "down", "up", "up"],
-      "category": "defensive",
-      "icon": "Control Group/Laser Sentry.svg",
-      "cooldown": 150,
-      "verified": false,
-      "warbond": "Control Group"
-    },
-    {
       "id": "defoliation_tool",
       "name": "CQC-9 Defoliation Tool",
       "keys": ["down", "left", "down", "up", "down"],
@@ -454,6 +435,16 @@
       "cooldown": 480,
       "verified": false,
       "warbond": "Python Commandos"
+    },
+    {
+      "id": "epoch",
+      "name": "PLAS-45 Epoch",
+      "keys": ["down", "right", "down", "up", "right", "left"],
+      "category": "support",
+      "icon": "Control Group/Epoch.svg",
+      "cooldown": 480,
+      "verified": false,
+      "warbond": "Control Group"
     },
     {
       "id": "leveller",
@@ -588,7 +579,7 @@
       "icon": "Borderline Justice/Hover Pack.svg",
       "cooldown": 480,
       "verified": true,
-      "warbond": "Servants of Freedom"
+      "warbond": "Borderline Justice"
     },
     {
       "id": "warp_pack",
@@ -608,7 +599,7 @@
       "icon": "Python Commandos/Guard Dog Hot Dog.svg",
       "cooldown": 480,
       "verified": false,
-      "warbond": "Freedom's Flame"
+      "warbond": "Python Commandos"
     },
     {
       "id": "c4_pack",
@@ -693,6 +684,16 @@
       "cooldown": 150,
       "verified": true,
       "warbond": "Urban Legends"
+    },
+    {
+      "id": "laser_sentry",
+      "name": "A/LAS-98 Laser Sentry",
+      "keys": ["down", "up", "right", "down", "up", "left"],
+      "category": "defensive",
+      "icon": "Control Group/Laser Sentry.svg",
+      "cooldown": 150,
+      "verified": false,
+      "warbond": "Control Group"
     },
     {
       "id": "shield_generator_relay",
@@ -821,6 +822,134 @@
       "uses": 3,
       "verified": false,
       "warbond": "Python Commandos"
+    },
+
+    {
+      "id": "reinforce",
+      "name": "Reinforce",
+      "keys": ["up", "down", "right", "left", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/Reinforce.svg",
+      "cooldown": 120,
+      "verified": true
+    },
+    {
+      "id": "resupply",
+      "name": "Resupply",
+      "keys": ["down", "down", "up", "right"],
+      "category": "mission",
+      "icon": "General Stratagems/Resupply.svg",
+      "cooldown": 160,
+      "verified": true
+    },
+    {
+      "id": "sos_beacon",
+      "name": "SOS Beacon",
+      "keys": ["up", "down", "right", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/SOS Beacon.svg",
+      "cooldown": 0,
+      "uses": 1,
+      "verified": true
+    },
+    {
+      "id": "eagle_rearm",
+      "name": "Eagle Rearm",
+      "keys": ["up", "up", "left", "up", "right"],
+      "category": "mission",
+      "icon": "Hangar/Eagle Rearm.svg",
+      "cooldown": 120,
+      "verified": true
+    },
+    {
+      "id": "hellbomb",
+      "name": "NUX-223 Hellbomb",
+      "keys": ["down", "up", "left", "down", "up", "right", "down", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/Hellbomb.svg",
+      "cooldown": 30,
+      "verified": true
+    },
+    {
+      "id": "seaf_artillery",
+      "name": "SEAF Artillery",
+      "keys": ["right", "up", "up", "down"],
+      "category": "mission",
+      "icon": "General Stratagems/SEAF Artillery.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "super_earth_flag",
+      "name": "Super Earth Flag",
+      "keys": ["down", "up", "down", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/Super Earth Flag.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "seismic_probe",
+      "name": "Seismic Probe",
+      "keys": ["up", "up", "left", "right", "down", "down"],
+      "category": "mission",
+      "icon": "General Stratagems/Seismic Probe.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "upload_data",
+      "name": "Upload Data",
+      "keys": ["left", "right", "up", "up", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/Upload Data.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "hive_breaker_drill",
+      "name": "Hive Breaker Drill",
+      "keys": ["left", "up", "down", "right", "down", "down"],
+      "category": "mission",
+      "icon": "General Stratagems/Hive Breaker Drill.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "prospecting_drill",
+      "name": "Prospecting Drill",
+      "keys": ["up", "up", "left", "down", "up", "up"],
+      "category": "mission",
+      "icon": "General Stratagems/Prospecting Drill.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "tectonic_drill",
+      "name": "Tectonic Drill",
+      "keys": ["right", "left", "right", "left", "right", "left"],
+      "category": "mission",
+      "icon": "General Stratagems/Tectonic Drill.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "dark_fluid_vessel",
+      "name": "Dark Fluid Vessel",
+      "keys": ["right", "left", "up", "down", "right", "right"],
+      "category": "mission",
+      "icon": "General Stratagems/Dark Fluid Vessel.svg",
+      "cooldown": 0,
+      "verified": true
+    },
+    {
+      "id": "orbital_illumination_flare",
+      "name": "Orbital Illumination Flare",
+      "keys": ["up", "up", "left", "left"],
+      "category": "mission",
+      "icon": "General Stratagems/Orbital Illumination Flare.svg",
+      "cooldown": 0,
+      "verified": true
     }
   ]
 }

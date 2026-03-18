@@ -99,7 +99,7 @@ Click **▶ Start** (WiFi mode selected by default).
 
 ### All Stratagems view
 
-Browse all 59 stratagems by category. Tap any card to execute.
+Browse all stratagems by category. Tap any card to execute.
 Use the search bar to filter by name.
 
 ### Loadouts
