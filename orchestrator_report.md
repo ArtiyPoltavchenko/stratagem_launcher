@@ -1,7 +1,7 @@
 # Orchestrator Report — Stratagem Launcher
 
 > Auto-updated by Claude Code at the end of each phase.
-> Last updated: 2026-03-17
+> Last updated: 2026-03-18
 
 ---
 
@@ -13,6 +13,7 @@ Phone → HTTP → Python/Flask server → pynput → keystrokes in game.
 **Stack:** Python 3.10+, Flask, pynput, Vanilla JS/HTML/CSS (no npm), tkinter (desktop GUI).
 **Environments:** WSL2 for development/tests, Windows for running the server (pynput requires native Windows).
 **Tests:** 82 passing (pytest, WSL).
+**Stratagems:** 98 entries, 7 categories.
 
 ---
 
@@ -32,7 +33,7 @@ Flask server (Windows, .venv_win)
 Desktop GUI (primary user entry point)
   └─ desktop/server_manager.py (tkinter)
        ├─ werkzeug.make_server() in daemon thread → same Flask app
-       ├─ QR code (tk.PhotoImage.put, no PIL)
+       ├─ QR code (tk.PhotoImage.put, no PIL), fixed 350×350 frame
        ├─ ADB auto-install (urllib, no admin rights)
        └─ dual log output: GUI ScrolledText + stdout
 ```
@@ -47,7 +48,6 @@ stratagem_launcher/
 ├── PROJECT_SPEC.md                  # Technical specification
 ├── orchestrator_report.md           # ← this file
 ├── README.md                        # User-facing setup + usage guide
-├── INITIAL_PROMPT.md                # Bootstrap prompt for new Claude sessions
 ├── .gitignore
 ├── requirements.txt                 # Windows venv: flask, flask-cors, pynput, qrcode>=7.0
 ├── requirements-dev.txt             # WSL venv: flask, flask-cors, pytest (no pynput)
@@ -58,10 +58,10 @@ stratagem_launcher/
 │   ├── app.py                       # Flask app factory + all routes (incl. /api/loadouts)
 │   ├── keypress.py                  # pynput simulation (VK codes, execute + manual mode)
 │   ├── stratagems.py                # JSON loader + validator + query functions
-│   └── config.py                    # Config dataclass (delays, host, port, key_hold, auto_click)
+│   └── config.py                    # Config dataclass (key_delay_min/max_ms, ctrl_hold, host, port)
 │
 ├── data/
-│   ├── stratagems.json              # 59 stratagems, 6 categories, icon_repo URL
+│   ├── stratagems.json              # 98 stratagems, 7 categories, icon_repo URL
 │   └── loadouts.json                # Server-side loadout persistence (created on first save)
 │
 ├── web/                             # PWA frontend (served by Flask as static)
@@ -98,7 +98,7 @@ stratagem_launcher/
 └── docs/
     ├── progress.md                  # Phase tracker
     ├── changelog.md                 # What changed and when
-    ├── decisions.md                 # Architectural decisions (ADR-001–006)
+    ├── decisions.md                 # Architectural decisions
     └── testing_checklist.md         # Manual testing checklist
 ```
 
@@ -148,14 +148,14 @@ Root cause: press+release was instantaneous, Ctrl delay too short for Helldivers
 
 **Timing model:**
 ```
-Ctrl DOWN → [ctrl_delay 150ms] → key DOWN → [key_hold 50ms] → key UP → [key_delay 80ms] → next key …
+Ctrl DOWN → [ctrl_delay 150ms] → key DOWN → [key_hold 50ms] → key UP → [key_delay random 50–80ms] → next key …
 ```
 
 - `_VK_CODES` dict: `up=0x57 / down=0x53 / left=0x41 / right=0x44`
-- `execute_stratagem(key_hold=0.05, key_delay=0.08, ctrl_delay=0.15, auto_click=False)`
-- Diagnostic `[KEYPRESS]` log: `[KEYPRESS] 0.150s 'right' (VK=0x44) DOWN`
+- `execute_stratagem(key_hold=0.05, key_delay_min_ms=50, key_delay_max_ms=80, ctrl_delay=0.15, auto_click=False)`
+- Diagnostic `[KEYPRESS]` log: `[KEYPRESS] 0.150s 'right' (VK=0x44) UP  delay=63.2ms (range: 50–80ms)`
 - Auto-click LMB option (auto-throw stratagem marker)
-- `GET/POST /api/settings` extended with `key_hold_ms`, `auto_click`
+- `GET/POST /api/settings` extended with `key_hold_ms`, `auto_click`, `key_delay_min_ms`, `key_delay_max_ms`
 - PWA: "Auto-throw after input" checkbox; settings toast feedback
 
 ### Phase 12 — Server Manager Bug Fixes ✅
@@ -180,7 +180,7 @@ All Canvas-based approaches discarded. Final implementation:
 - `self._qr_photo` holds reference (prevents GC collection)
 - `_refresh_qr()`: updates URL StringVars, checks `server_running`, calls `_draw_qr()` only when server is alive
 - QR not shown before first Start — displays "Press Start to show QR" placeholder
-- White-bg `qr_frame` provides quiet zone
+- White-bg `qr_frame` is 350×350 px (fixed via `pack_propagate(False)`); QR centered with `place(relx=0.5, rely=0.5)`
 - On mode change while running: QR regenerated for new URL
 
 ### Console Logging
@@ -203,6 +203,31 @@ All Canvas-based approaches discarded. Final implementation:
 - `inset box-shadow` replaces `outline` for manual-active indicator (no viewport overflow)
 - Cancel button moved out of `ldpad-topbar` to direct flex child of `loadout-dpad-area`
 
+### Stratagems Database Expansion (2026-03-17)
+- `data/stratagems.json`: 59 → 98 stratagems, 7 categories
+- Added all DLC / Warbond stratagems through March 2026
+- `warbond` field for warbond-exclusive entries; `uses` field for limited-use stratagems
+- `"mission"` category retained (reinforce etc.); `"vehicle"` category added
+- 23 icon paths filled from nvigneux/Helldivers-2-Stratagems-icons-svg repo
+- 3 warbond corrections: `flame_sentry` → Urban Legends, `de_escalator` → Force of Law, `warp_pack` → Control Group
+- 2 new entries added: `laser_sentry` (Control Group), `defoliation_tool` (Python Commandos)
+- 6 entries intentionally keep `"icon": ""` — not yet in icon repo: leveller, belt_fed_grenade_launcher, cremator, c4_pack, gas_mortar_sentry, bastion
+
+### Delete Loadout Button (2026-03-18)
+- Edit mode header: **Delete** button (red, `.btn-edit-action--danger`) between Cancel and Save
+- Confirms before delete; if deleted loadout was active → resets to All tab
+- Calls `saveLoadoutsToStorage()` (localStorage + `PUT /api/loadouts`) then `exitEditMode(false)`
+
+### Randomized Key Delay — Anti-Macro (2026-03-18)
+- `Config`: `key_delay_ms` (single field) replaced by `key_delay_min_ms=50` / `key_delay_max_ms=80`
+- `key_delay_ms` retained as backward-compat property (sets both fields)
+- `keypress.py`: `_random_delay(min_ms, max_ms)` seeded with `time.time_ns()` per keypress
+- Log output shows actual delay and range: `delay=63.2ms (range: 50–80ms)`
+- `GET /api/settings` returns all three fields; `POST` accepts new fields + old `key_delay_ms`
+- PWA: single delay slider replaced with **dual-range slider** — yellow fill between thumbs
+- Label shows `50–80 ms` (or `70 ms` if min=max); `change` event syncs to server immediately
+- Values persisted in localStorage as `sl_delay_min` / `sl_delay_max`
+
 ---
 
 ## Known Issues / Bugs Log
@@ -223,6 +248,7 @@ All Canvas-based approaches discarded. Final implementation:
 | 2026-03-17 | Landscape: cards/dpad overlapping on S23 Ultra | `min-width:0`, `height:auto`, dvh-based `--cell` |
 | 2026-03-17 | USB button had no action | `_setup_usb()` with messagebox + Popen |
 | 2026-03-17 | ADB not installed on clean machine | "Install ADB" button — urllib download, no admin |
+| 2026-03-18 | `Config(key_delay_ms=...)` crash in server_manager on Start | `Config()` now uses `key_delay_min_ms`/`key_delay_max_ms` |
 
 ---
 
@@ -234,8 +260,8 @@ All Canvas-based approaches discarded. Final implementation:
 | GET | `/api/health` | Health check |
 | GET | `/api/stratagems` | All stratagems + categories + icon_repo |
 | POST | `/api/execute` | `{id}` → execute stratagem key sequence |
-| GET | `/api/settings` | `key_delay_ms`, `ctrl_hold_delay_ms`, `key_hold_ms`, `auto_click` |
-| POST | `/api/settings` | Update any settings field |
+| GET | `/api/settings` | `key_delay_min_ms`, `key_delay_max_ms`, `key_delay_ms` (compat), `ctrl_hold_delay_ms`, `key_hold_ms`, `auto_click` |
+| POST | `/api/settings` | Update any settings field; accepts both new and legacy `key_delay_ms` |
 | POST | `/api/manual/start` | Hold Ctrl, start manual mode |
 | POST | `/api/manual/key` | `{direction}` → press one key while Ctrl held |
 | POST | `/api/manual/stop` | Release Ctrl, end manual mode |

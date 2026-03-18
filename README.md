@@ -46,9 +46,7 @@ Double-click **`Stratagem Launcher.exe`**.
 
 The Server Manager window opens:
 
-
 <img width="1280" height="971" alt="image" src="https://github.com/user-attachments/assets/07a89723-3fd7-4b1b-a25c-100cca21e636" />
-
 
 ### 3. Start the server
 
@@ -82,7 +80,7 @@ Click **▶ Start** (WiFi mode selected by default).
 
 ### All Stratagems view
 
-Browse all stratagems by category. Tap any card to execute.
+Browse all 98 stratagems by category. Tap any card to execute.
 Use the search bar to filter by name.
 
 ### Loadouts
@@ -91,8 +89,9 @@ Create loadout tabs (up to 4 stratagems each) for quick in-game access:
 
 1. Tap **＋** to add a new loadout
 2. Tap **✎** to edit — select up to 4 stratagems
-3. Tap the loadout tab to switch to loadout view
-4. In loadout view: 4 large cards + embedded D-pad on screen at once
+3. Tap **Delete** (red button) in edit mode to remove the loadout
+4. Tap the loadout tab to switch to loadout view
+5. In loadout view: 4 large cards + embedded D-pad on screen at once
 
 ### D-pad (Manual Input)
 
@@ -109,7 +108,7 @@ For stratagems not in your loadout, use manual D-pad input:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | Server IP | auto | Custom IP if auto-connect fails (e.g. `192.168.1.5:5000`) |
-| Key delay | 50 ms | Delay between key presses. Increase to 80–100ms if inputs drop |
+| Key delay | 50–80 ms | Random delay range between key presses (anti-macro). Set min=max for fixed delay |
 | Cooldown reduction | 0% | Ship module upgrades (0–50%) |
 | Show cooldowns | on | Cooldown timer on each card |
 | Auto-throw after input | off | LMB click after sequence (auto-throw marker) |
@@ -120,7 +119,7 @@ For stratagems not in your loadout, use manual D-pad input:
 
 **Keys not registering in game**
 - Make sure Helldivers 2 window is **focused** when you tap
-- Try increasing key delay to 80–100ms in ⚙ Settings
+- Try increasing key delay min to 80–100ms in ⚙ Settings
 - Server must run on **Windows** (not WSL) — pynput needs native Windows
 
 **Phone can't reach server**
@@ -150,7 +149,7 @@ scripts\start_server_wifi.bat
 scripts\start_server.bat
 
 # Custom options
-python -m server.app --host 0.0.0.0 --port 5000
+python -m server.app --host 0.0.0.0 --port 5000 --key-delay-min 50 --key-delay-max 80
 ```
 
 ---
@@ -172,7 +171,7 @@ Run the server on **Windows** for real key injection — pynput cannot inject ke
 
 ## Stratagem Database
 
-Edit `data/stratagems.json` to add or correct stratagems:
+Edit `data/stratagems.json` to add or correct stratagems (98 entries, 7 categories):
 
 ```json
 {
@@ -191,6 +190,8 @@ Edit `data/stratagems.json` to add or correct stratagems:
 | `keys` | Directions after Ctrl: `"up"` `"down"` `"left"` `"right"` |
 | `cooldown` | Seconds — drives the UI countdown timer |
 | `verified` | `false` = untested, shows `?` badge |
+| `warbond` | Warbond name — omit for base-game stratagems |
+| `uses` | Number of uses per mission (omit if unlimited) |
 
 ---
 
