@@ -931,6 +931,17 @@ function initLoadouts() {
 
   document.getElementById('edit-save-btn').addEventListener('click', () => exitEditMode(true));
   document.getElementById('edit-cancel-btn').addEventListener('click', () => exitEditMode(false));
+  document.getElementById('edit-delete-btn').addEventListener('click', () => {
+    if (editLoadoutId === null) return;
+    const l = getLoadout(editLoadoutId);
+    const name = l?.name ?? 'this loadout';
+    if (!confirm(`Delete loadout "${name}"? This cannot be undone.`)) return;
+    const wasActive = activeLoadoutId === editLoadoutId;
+    loadouts = loadouts.filter(lo => lo.id !== editLoadoutId);
+    saveLoadoutsToStorage();
+    if (wasActive) activeLoadoutId = null;
+    exitEditMode(false);
+  });
 }
 
 async function boot() {

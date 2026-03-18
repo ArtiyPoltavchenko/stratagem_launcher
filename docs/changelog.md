@@ -7,6 +7,12 @@ Entries added by Claude Code after each completed task.
 
 ## [Unreleased]
 
+### 2026-03-18 — feat: delete loadout button in edit mode
+
+- `web/index.html`: added `#edit-delete-btn` between Cancel and Save in edit header
+- `web/style.css`: added `.btn-edit-action--danger` (dark red, visually distinct)
+- `web/app.js`: delete handler — confirms, removes from `loadouts`, saves to localStorage + server, resets activeLoadoutId if deleted was active, exits edit mode
+
 ### 2026-03-17 — Fix: stratagems.json — all icon paths filled
 
 - `data/stratagems.json`: filled icon paths for 23 stratagems (airburst_rocket_launcher, wasp_launcher, de_escalator, sterilizer, one_true_flag, solo_silo, expendable_napalm, speargun, maxigun, epoch, guard_dog_dog_breath, guard_dog_k9, portable_hellbomb, directional_shield, hover_pack, warp_pack, hot_dog, flame_sentry, anti_tank_emplacement, grenadier_battlement, anti_tank_mines, gas_mines, emancipator_exosuit, fast_recon_vehicle)

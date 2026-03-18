@@ -224,6 +224,12 @@ body {
   border-color: var(--accent-yellow);
   color: var(--accent-yellow);
 }
+.btn-edit-action--danger {
+  background: #8b0000;
+  color: #fff;
+  border-color: #c62828;
+}
+.btn-edit-action--danger:hover { background: #c62828; }
 
 /* -------------------------------------------------------- card edit state */
 
