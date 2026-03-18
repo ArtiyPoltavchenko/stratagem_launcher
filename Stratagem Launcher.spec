@@ -4,8 +4,10 @@ from PyInstaller.utils.hooks import collect_all
 datas = [('data', 'data'), ('web', 'web'), ('server', 'server')]
 binaries = []
 hiddenimports = []
-tmp_ret = collect_all('qrcode')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+for pkg in ('qrcode', 'flask', 'werkzeug', 'flask_cors'):
+    tmp_ret = collect_all(pkg)
+    datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+hiddenimports += ['flask', 'werkzeug', 'werkzeug.serving', 'flask_cors']
 
 
 a = Analysis(

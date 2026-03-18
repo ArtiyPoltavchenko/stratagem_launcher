@@ -89,6 +89,13 @@ pyinstaller ^
     --add-data "web;web" ^
     --add-data "server;server" ^
     --collect-all qrcode ^
+    --collect-all flask ^
+    --collect-all werkzeug ^
+    --collect-all flask_cors ^
+    --hidden-import flask ^
+    --hidden-import werkzeug ^
+    --hidden-import werkzeug.serving ^
+    --hidden-import flask_cors ^
     desktop\server_manager.py
 
 if errorlevel 1 (
