@@ -25,20 +25,18 @@ Mobile remote control for Helldivers 2 stratagems.
 
 ### 1. Build the .exe (one time)
 
-You need Python 3.10+ and the Windows venv set up first:
+You need **Python 3.10+** installed and added to PATH. That's it.
 
-```powershell
-cd C:\path\to\stratagem_launcher
+Double-click **`scripts\build_exe.bat`** — it will:
+- Create the virtual environment automatically
+- Install all dependencies
+- Build the executable
 
-python -m venv .venv_win
-.venv_win\Scripts\activate
-pip install -r requirements.txt
-pip install -r requirements-build.txt
-
-scripts\build_exe.bat
+```
+dist\Stratagem Launcher.exe
 ```
 
-This creates `dist\Stratagem Launcher.exe`. Copy it anywhere — it is fully self-contained.
+Copy it anywhere — it is fully self-contained. No Python required on the target machine.
 
 ### 2. Launch
 
