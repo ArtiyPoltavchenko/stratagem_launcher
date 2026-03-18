@@ -31,3 +31,12 @@ desktop.ini
 
 # ngrok
 ngrok.yml
+
+# Runtime data (user-specific, not for repo)
+data/loadouts.json
+
+# Claude — instructions, prompts, orchestration meta
+CLAUDE.md
+INITIAL_PROMPT.md
+orchestrator_report.md
+prompts/
